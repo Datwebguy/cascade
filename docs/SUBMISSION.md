@@ -14,15 +14,15 @@ Deadline: **13 November 2026, 11:59pm Pacific**. Submissions are final once sent
 
 ## 300-word summary (draft — edit to your own voice)
 
-I post every day, and every day I do the same chore: I have one idea, then I rewrite it for X, LinkedIn, Instagram and the rest, hunt for an image, and paste everything into Buffer one channel at a time. The idea itself usually gets lost in the process.
+Cascade is for people who post every day across several social networks with Buffer: founders announcing what they shipped, small businesses sharing today's offer, creators promoting new work.
 
-Cascade does that hand-off step. You connect your Buffer account with OAuth (Authorization Code with PKCE, as a private App Client), write one idea, optionally upload a photo or video (or paste a link), and choose which of your real Buffer channels to post to. Cascade adapts the idea for each channel with an AI model. X gets something short, LinkedIn something longer with paragraph breaks, Instagram a caption. Every draft is checked against Buffer's own character rules before anything is sent, including how X weights links and emoji, how LinkedIn counts URLs, and how Instagram counts line breaks. Mastodon limits, X subscription type and Pinterest boards are read from each channel's metadata.
+Buffer already solved the posting. What it leaves to you is the writing. X wants it short, LinkedIn wants the story, Instagram wants a caption. So most people either paste the same text everywhere, which reads badly, or rewrite it by hand for every network, every day. I kept skipping that step, so I built Cascade on the Buffer API.
 
-On the review screen you edit anything, choose per channel whether to add to queue, schedule for a time in that channel's timezone, or save as draft, and set network options such as Instagram post type or a YouTube title. One click then saves your original idea with `createIdea` and creates one post per channel with `createPost`, passing the idea's `ideaId`. Typed mutation errors are shown per channel in plain language, failed channels can be retried without duplicating the rest, and if Buffer times out, Cascade checks whether the post landed before offering a retry, because createPost has no idempotency key.
+You sign in with Buffer (OAuth with PKCE, as a private App Client) and your real channels load from Buffer. You write the idea once, in your own words, and add a photo or video: upload it from your phone (Cascade hosts it at a stable public link, as Buffer requires) or paste a link. Cascade writes a version for each selected network, in that network's style, and checks every draft against Buffer's own character rules, including X Premium limits read from the channel. It never adds hashtags or emojis you didn't write, and Instagram gets a correctly cropped image when needed.
 
-Under the hood, tokens live server-side in Redis, refresh is locked so rotated refresh tokens are never replayed, channels are cached to protect the shared rate limit, and `Retry-After` is honoured.
+You review and edit each post, choose per channel between your Buffer queue, a set time in that channel's time zone, or a draft, and send. Cascade saves your original idea to Buffer Ideas with `createIdea`, then creates one Buffer post per channel with `createPost`. Errors are explained in plain words per channel, failed channels can be retried without duplicating the rest, and if Buffer times out, Cascade checks whether the post landed before offering a retry.
 
-Next: first comments and threads, multi-image posts, hosted media upload, and a team workspace.
+Next: first comments and threads, multi-image posts, saved voice and tone preferences, and a team review step before posts go to Buffer.
 
 ## Two-minute demo script
 

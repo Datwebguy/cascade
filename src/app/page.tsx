@@ -26,15 +26,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
 
       <header className="hero">
         <div>
-          <span className="eyebrow">For people who post every day</span>
+          <span className="eyebrow">For people who post daily across networks with Buffer</span>
           <h1>
             One idea.
             <br />
             <span className="gradient-text">Every channel.</span>
           </h1>
           <p className="lede">
-            Write your idea once. Cascade turns it into a post made for each of your social channels, then sends them all to
-            Buffer, scheduled your way.
+            X wants it short. LinkedIn wants the story. Instagram wants a caption. Write your idea once, and Cascade turns it
+            into a post made for each network, then puts them all in Buffer, scheduled your way.
           </p>
           {error && (
             <p className="notice error" role="alert" style={{ marginTop: "1.2rem" }}>
