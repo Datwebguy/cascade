@@ -1,88 +1,80 @@
 # Cascade
 
-One idea becomes fully adapted, media-ready posts across every channel you use in Buffer.
+**Write one idea. Get a post made for every network. Ready in Buffer.**
 
-Cascade is a web app for people who post every day. You start with a single idea, optionally add media, and Cascade produces platform-adapted versions for your real Buffer channels. You review, edit, choose scheduling for each post, and send everything into Buffer in one action. The original idea is saved so it is not lost.
+Live: **https://oncascade.vercel.app** · Built on the Buffer API for Buffer Commit 2026
 
-## What it does
+![Cascade turns one idea into a LinkedIn post and an X post, side by side](docs/screenshots/review.webp)
 
-1. Connect your Buffer account with OAuth.
-2. See your real channels.
-3. Enter one idea (or select an existing Idea).
-4. Optionally add an image or video URL.
-5. Receive adapted drafts for the channels you select.
-6. Edit drafts, confirm media, and choose scheduling mode per channel.
-7. Confirm — the idea is saved and the posts are created in Buffer.
+## Who it's for
 
-## Why it exists
+People who post every day across several networks with Buffer:
 
-Daily posters already rewrite the same idea for different platforms, attach media, and manually get everything into Buffer. Cascade owns that adaptation and hand-off step.
+- **Founders** announcing what they shipped on X, LinkedIn and Threads.
+- **Small businesses** sharing today's offer on Instagram, Facebook and Google.
+- **Creators** promoting a new video or newsletter everywhere they post.
 
-## Buffer API surface
+## The problem
 
-- OAuth 2.0 with PKCE (App Client)
-- `channels` query
-- `createIdea`
-- `createPost` (with assets, scheduling mode, and optional service metadata)
+Buffer already solved the posting. The writing is still on you. X wants it short, LinkedIn wants the story, Instagram wants a caption. So most people either paste the same text everywhere, which reads badly, or rewrite it by hand for every network, every day.
 
-## Run it
-
-Requirements: Node.js 22+, a Buffer account, an OpenAI API key.
-
-1. **Register an App Client** in Buffer: Settings → API → App Clients → New Client.
-   - Type: **Private** (Cascade has a server that keeps the secret). PKCE is still used.
-   - Permissions: `account:read`, `posts:read`, `posts:write`, `ideas:read`, `ideas:write`, plus offline access.
-   - Redirect URIs (HTTPS is required, even locally): `https://localhost:3000/api/auth/callback` and your production URL + `/api/auth/callback`.
-2. **Configure**: `cp .env.example .env.local` and fill in the values (see comments in the file).
-3. **Run**:
-
-   ```bash
-   npm install
-   npm run dev     # https://localhost:3000 (self-signed certificate; accept it in the browser)
-   ```
-
-Other scripts: `npm run build`, `npm start`, `npm run typecheck`, `npm test`.
-
-### Deploying (Vercel)
-
-1. Import the repository into Vercel.
-2. Add a Redis store from the Vercel Marketplace (Upstash). It sets `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
-3. Set `BUFFER_CLIENT_ID`, `BUFFER_CLIENT_SECRET`, `BUFFER_REDIRECT_URI`, `SESSION_SECRET` and `OPENAI_API_KEY` in Project → Settings → Environment Variables.
-4. Register `https://<your-domain>/api/auth/callback` on the Buffer App Client.
-5. Smoke test: connect, pick channels, send with **Save as draft**, disconnect, reconnect.
-
-### Local mock (tests only)
-
-`scripts/mock-buffer.mjs` is a fixture server that imitates Buffer's auth and GraphQL endpoints so the flow can be tested without credentials. Point `BUFFER_AUTH_URL` / `BUFFER_API_URL` at it. It is not used by the app in production.
+Cascade does that step. You write the idea once, in your own words. Cascade writes a version for each network and puts them all in Buffer: queued, scheduled or as drafts.
 
 ## How it works
 
-| Piece | Where |
+| 1. Write it once | 2. Get a post for each network | 3. Send to Buffer |
+| --- | --- | --- |
+| ![Writing the idea and choosing Buffer channels](docs/screenshots/compose.webp) | ![Cascade writing a post for each network](docs/screenshots/writing.webp) | ![Posts saved in Buffer](docs/screenshots/sent.webp) |
+| Sign in with Buffer. Your channels load from Buffer. Write the idea, add a photo or video (upload it or paste a link), pick channels. | Each network gets its own version, in its own style, checked against Buffer's character rules. Edit anything or ask for a fresh version. | Choose per channel: Buffer queue, a set time in that channel's time zone, or a draft. One tap sends them all and saves your idea in Buffer Ideas. |
+
+<p align="center"><img src="docs/screenshots/mobile.webp" alt="Cascade on a phone" width="260"></p>
+
+## Your words, nothing added
+
+- Cascade never adds hashtags or emojis you didn't write. Every draft is filtered on the server, not just prompted.
+- Links you include are kept exactly.
+- Nothing is published without your review. Drafts never publish.
+
+## How it uses the Buffer API
+
+| What | Buffer API |
 | --- | --- |
-| OAuth 2.0 Authorization Code + PKCE (S256), state check | `src/lib/oauth.ts`, `src/app/api/auth/*` |
-| Tokens in a shared Redis store; the browser only holds an encrypted session ID. Refresh is locked so a rotated refresh token is never replayed | `src/lib/session.ts`, `src/lib/store.ts` |
-| Organizations + channels (with Mastodon limit, X subscription, Pinterest boards), cached per session | `src/lib/buffer.ts`, `src/app/api/handler.ts` |
-| Saved Ideas, paginated | `src/app/api/ideas` |
-| AI adaptation (OpenAI, structured output), validated against Buffer's counting rules with one targeted rewrite | `src/lib/ai.ts`, `src/app/api/adapt` |
-| Character counting per network (X weighting, LinkedIn/Mastodon URL weights, Instagram line breaks, Bluesky graphemes) | `src/lib/count.ts`, `src/lib/platforms.ts` |
-| Media URL check: public, direct, HTTPS; type from Content-Type | `src/lib/media.ts` |
-| `createIdea`, then one `createPost` per channel with `ideaId`; success + `MutationError` selected; timeouts verified before any retry | `src/app/api/publish/route.ts`, `src/lib/post-input.ts` |
-| Rate limits: `Retry-After`, `RateLimit` headers, low-quota warning | `src/lib/buffer.ts` |
+| Sign in | OAuth 2.0 Authorization Code with PKCE, private App Client, refresh tokens |
+| Your workspaces and channels | `account { organizations }`, `channels` (with Mastodon limit, X subscription, Pinterest boards from channel metadata) |
+| Start from a saved idea | `ideas` (paginated) |
+| Save the original idea | `createIdea` |
+| One post per network | `createPost` with media assets, queue / custom time / draft, and network settings (Instagram and Facebook post type, Pinterest board, YouTube title and visibility) |
+| Safe retries | `posts` lookup after a timeout, because `createPost` has no idempotency key |
 
-Notes:
+Details that matter when acting on someone else's Buffer account:
 
-- Scheduling: add to queue, a custom time in the **channel's** timezone, or save as draft (`saveToDraft`).
-- Per-network options: Instagram/Facebook post type, Pinterest board and title, YouTube title and visibility.
-- Metrics are not read: they are personal-key only and unavailable to App Clients.
-- See `docs/RESEARCH_AND_GAPS.md` for the documentation this is built against.
+- Tokens stay on the server in Redis; the browser only holds an encrypted session ID.
+- Buffer rotates refresh tokens and revokes the grant if an old one is reused, so refreshes are serialised with a lock.
+- Character counts follow Buffer's own rules: X weighting, LinkedIn and Mastodon link weights, Instagram line breaks, Bluesky graphemes.
+- Media is hosted at a stable public URL (Vercel Blob), because Buffer fetches it when the post goes out. Instagram gets a cropped copy when a photo's shape won't auto-publish.
+- `429` responses are honoured with `Retry-After`; the channel list is cached per session to protect the shared rate limit.
+- Typed mutation errors are shown per channel in plain language; failed channels can be retried without duplicating the rest.
 
-## Status
+## Run it locally
 
-Built for Buffer Commit 2026.
+Requirements: Node.js 22+, a Buffer App Client, an OpenAI API key.
 
-## Next steps
+```bash
+cp .env.example .env.local   # fill in the values; comments explain each one
+npm install
+npm run dev                  # https://localhost:3000 (Buffer requires HTTPS redirect URIs)
+```
 
-- Stronger per-platform adaptation
-- Multi-image and richer media support
-- Thread and first-comment helpers
-- Optional personal-key metrics view for the account owner
+Register `https://localhost:3000/api/auth/callback` (and your production URL) on the App Client. Production also needs a Redis store and a Blob store; both are one click in Vercel Storage.
+
+Checks: `npm run typecheck` and `npm test`.
+
+## Built during Buffer Commit
+
+Everything here was built between October 28 and November 13, 2026.
+
+## Next
+
+First comments and threads, multi-image posts, saved voice and tone preferences, and a team review step before posts go to Buffer.
+
+Not affiliated with Buffer. [Privacy](https://oncascade.vercel.app/privacy)
