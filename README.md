@@ -24,8 +24,22 @@ Cascade does that step. You write the idea once, in your own words. Cascade writ
 
 | 1. Write it once | 2. Get a post for each network | 3. Send to Buffer |
 | --- | --- | --- |
-| ![Writing the idea and choosing Buffer channels](docs/screenshots/compose.webp) | ![Cascade writing a post for each network](docs/screenshots/writing.webp) | ![Posts saved in Buffer](docs/screenshots/sent.webp) |
+| ![Writing the idea and choosing Buffer channels](docs/screenshots/compose.webp) | ![Cascade writing a post for each network](docs/screenshots/writing.webp) | ![Choosing queue, a set time or draft for each post](docs/screenshots/review.webp) |
 | Sign in with Buffer. Your channels load from Buffer. Write the idea, add a photo or video (upload it or paste a link), pick channels. | Each network gets its own version, in its own style, checked against Buffer's character rules. Edit anything or ask for a fresh version. | Choose per channel: Buffer queue, a set time in that channel's time zone, or a draft. One tap sends them all and saves your idea in Buffer Ideas. |
+
+## What happens after you send
+
+Cascade doesn't publish on its own. **Buffer does**, using the choice you made for each post:
+
+| You choose | What happens |
+| --- | --- |
+| **Queue** | Buffer publishes it automatically at the next open slot in that channel's posting schedule. |
+| **Pick a time** | Buffer publishes it automatically at that time, in the channel's time zone. |
+| **Draft** | Nothing is published. It waits in Buffer's Drafts until you schedule or publish it there. |
+
+Queued and scheduled posts go out even if you close Cascade. Every post can still be edited, rescheduled or deleted in Buffer, and your original idea stays in Buffer Ideas to reuse.
+
+<p align="center"><img src="docs/screenshots/sent.webp" alt="After sending: each post's status in Buffer and what happens next" width="720"></p>
 
 <p align="center"><img src="docs/screenshots/mobile.webp" alt="Cascade on a phone" width="260"></p>
 

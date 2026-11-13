@@ -62,6 +62,12 @@
    "text": "One tap sends everything to Buffer, and saves my original idea in Buffer Ideas."
   },
   {
+   "id": "s10b",
+   "scene": "app",
+   "chip": "What happens next",
+   "text": "From there, Buffer takes over. Queued and scheduled posts publish automatically at their time, even if I close Cascade. Drafts wait in Buffer until I give the final OK."
+  },
+  {
    "id": "s11",
    "scene": "outro",
    "chip": "",

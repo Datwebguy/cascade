@@ -184,7 +184,12 @@ async function card(name, ids, holdAfter = 800) {
         () => page.click(".actionbar .btn.primary"),
         () => cut(() => page.waitForSelector(".results", { timeout: 60000 })),
       );
-      await sleep(1200);
+      await say("s10b", async () => {
+        await page.locator(".status-link").first().hover().catch(() => {});
+        await sleep(2200);
+        await page.evaluate(() => document.querySelector(".what-next")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+      });
+      await sleep(1000);
     }),
   );
 
