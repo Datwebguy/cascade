@@ -1,50 +1,84 @@
 import { redirect } from "next/navigation";
+import { HeroDemo } from "@/components/HeroDemo";
+import { Logo } from "@/components/Logo";
 import { hasSession } from "@/lib/session";
 
-const ERRORS: Record<string, string> = {
-  access_denied: "You declined access in Buffer. Connect again whenever you're ready.",
-  invalid_state: "The sign-in session expired or was tampered with. Please try again.",
-  missing_code: "Buffer didn't return an authorization code. Please try again.",
-  token_exchange_failed: "Buffer sign-in didn't complete. Please try connecting again.",
-  session_expired: "Your Buffer connection expired. Please connect again.",
-  invalid_scope: "The app requested a permission that isn't enabled for it.",
+const MESSAGES: Record<string, string> = {
+  access_denied: "You chose not to connect. Connect whenever you're ready.",
+  invalid_state: "That sign-in took too long or was interrupted. Please try again.",
+  missing_code: "Buffer didn't finish signing you in. Please try again.",
+  token_exchange_failed: "We couldn't finish connecting to Buffer. Please try again.",
+  session_expired: "You've been signed out. Connect again to continue.",
 };
 
-export default async function ConnectPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  if (await hasSession()) redirect("/compose");
+export default async function Home({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  if (await hasSession().catch(() => false)) redirect("/compose");
   const { error } = await searchParams;
 
   return (
-    <main className="connect">
-      <div className="brand">
-        <span className="logo" aria-hidden>
-          ≋
-        </span>
-        Cascade
-      </div>
-      <h1>One idea. Every channel. Ready in Buffer.</h1>
-      <p className="lede">
-        Write an idea once, add an image or video, and Cascade adapts it into a native post for each
-        of your Buffer channels. Review, schedule, and send them all in one step. Your original idea
-        is saved to Buffer Ideas.
-      </p>
-      {error && <p className="alert error">{ERRORS[error] ?? "Couldn't connect to Buffer. Please try again."}</p>}
-      <a className="btn primary big" href="/api/auth/login">
-        Connect your Buffer account
-      </a>
-      <ol className="steps">
-        <li>Connect with Buffer</li>
-        <li>Write one idea</li>
-        <li>Review adapted drafts</li>
-        <li>Send to Buffer</li>
-      </ol>
-      <p className="muted small footer">
-        Built on the Buffer API. Not affiliated with or endorsed by Buffer. <a href="/privacy">Privacy</a>
-      </p>
-    </main>
+    <div className="landing">
+      <nav className="nav">
+        <Logo />
+        <a className="btn ghost sm" href="/api/auth/login">
+          Sign in
+        </a>
+      </nav>
+
+      <header className="hero">
+        <div>
+          <span className="eyebrow">For people who post every day</span>
+          <h1>
+            One idea.
+            <br />
+            <span className="gradient-text">Every channel.</span>
+          </h1>
+          <p className="lede">
+            Write your idea once. Cascade turns it into a post made for each of your social channels, then sends them all to
+            Buffer, scheduled your way.
+          </p>
+          {error && (
+            <p className="notice error" role="alert" style={{ marginTop: "1.2rem" }}>
+              {MESSAGES[error] ?? "We couldn't connect to Buffer. Please try again."}
+            </p>
+          )}
+          <div className="hero-cta">
+            <a className="btn glow lg" href="/api/auth/login">
+              Connect your Buffer account
+            </a>
+          </div>
+          <div className="trust">
+            <span>You review every post first</span>
+            <span>Your idea is saved to Buffer</span>
+            <span>Disconnect anytime</span>
+          </div>
+        </div>
+        <HeroDemo />
+      </header>
+
+      <section className="how">
+        <h2>From thought to every feed in three steps</h2>
+        <div className="how-grid">
+          <article className="how-card">
+            <span className="num">1</span>
+            <h3>Write it once</h3>
+            <p>Say what's on your mind and add a photo or video if you like. Or start from an idea you already saved in Buffer.</p>
+          </article>
+          <article className="how-card">
+            <span className="num">2</span>
+            <h3>Get posts that fit</h3>
+            <p>Short and punchy for X, thoughtful for LinkedIn, caption-ready for Instagram. Every post fits its network's limits.</p>
+          </article>
+          <article className="how-card">
+            <span className="num">3</span>
+            <h3>Send to Buffer</h3>
+            <p>Edit anything, then queue, schedule, or save as drafts. One click sends them all, linked to your original idea.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer className="site-footer">
+        Built on the Buffer API. Not affiliated with Buffer. <a href="/privacy">Privacy</a>
+      </footer>
+    </div>
   );
 }

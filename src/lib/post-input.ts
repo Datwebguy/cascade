@@ -74,26 +74,26 @@ export function checkDraft(draft: Draft, channel: Channel, media: Media | null, 
   const count = countFor(channel.service, draft.text);
   const errors: string[] = [];
 
-  if (!draft.text.trim()) errors.push("Post text is empty.");
-  if (count > limit) errors.push(`${count}/${limit} characters: over the ${p.label} limit.`);
-  if (p.requiresMedia === "any" && !attached) errors.push(`${p.label} posts need an image or video.`);
-  if (p.requiresMedia === "video" && attached?.kind !== "video") errors.push(`${p.label} posts need a video.`);
-  if (p.requiresMedia === "image" && attached?.kind !== "image") errors.push(`${p.label} pins need an image.`);
+  if (!draft.text.trim()) errors.push("Write something for this post.");
+  if (count > limit) errors.push(`Too long for ${p.label}. Trim ${(count - limit).toLocaleString()} characters.`);
+  if (p.requiresMedia === "any" && !attached) errors.push(`${p.label} needs an image or video.`);
+  if (p.requiresMedia === "video" && attached?.kind !== "video") errors.push(`${p.label} needs a video.`);
+  if (p.requiresMedia === "image" && attached?.kind !== "image") errors.push(`${p.label} needs an image.`);
   if (p.title === "required" && !draft.title?.trim()) errors.push(`${p.label} needs a title.`);
-  if (draft.title && draft.title.length > TITLE_LIMIT) errors.push(`Title is over ${TITLE_LIMIT} characters.`);
+  if (draft.title && draft.title.length > TITLE_LIMIT) errors.push(`Keep the title under ${TITLE_LIMIT} characters.`);
   if (channel.service === "youtube" && /[<>]/.test(draft.text + (draft.title ?? ""))) {
-    errors.push('YouTube text and titles cannot contain "<" or ">".');
+    errors.push('YouTube doesn\'t allow "<" or ">" in titles or descriptions.');
   }
-  if (channel.service === "pinterest" && !draft.options.pinterestBoardId) errors.push("Choose a Pinterest board.");
+  if (channel.service === "pinterest" && !draft.options.pinterestBoardId) errors.push("Choose a board for this pin.");
   if (draft.mode === "customScheduled") {
     if (!draft.dueLocal) errors.push("Pick a date and time.");
     else {
       try {
         if (new Date(zonedLocalToUtcIso(draft.dueLocal, channel.timezone)).getTime() <= now.getTime()) {
-          errors.push("The scheduled time is in the past.");
+          errors.push("That time has already passed. Pick a time in the future.");
         }
       } catch {
-        errors.push("Invalid date and time.");
+        errors.push("Pick a valid date and time.");
       }
     }
   }

@@ -21,11 +21,11 @@ export class BufferError extends Error {
 export class BufferUncertainError extends Error {}
 
 const FRIENDLY: Record<string, string> = {
-  UNAUTHORIZED: "Your Buffer connection has expired. Please reconnect.",
-  FORBIDDEN: "Cascade doesn't have permission for that in your Buffer account. Reconnect and approve all requested permissions.",
-  NOT_FOUND: "That item no longer exists in Buffer. Refresh your channels and try again.",
-  UNEXPECTED: "Buffer had a temporary problem. Please try again in a moment.",
-  RATE_LIMIT_EXCEEDED: "Cascade has hit Buffer's request limit.",
+  UNAUTHORIZED: "You've been signed out of Buffer. Please connect again.",
+  FORBIDDEN: "Cascade doesn't have permission to do that. Sign out, connect again, and approve every permission.",
+  NOT_FOUND: "That no longer exists in Buffer. Refresh your channels and try again.",
+  UNEXPECTED: "Buffer had a hiccup. Please try again in a moment.",
+  RATE_LIMIT_EXCEEDED: "Buffer needs a short break.",
 };
 
 export function friendlyMessage(e: unknown): string {
@@ -36,7 +36,7 @@ export function friendlyMessage(e: unknown): string {
     }
     return FRIENDLY[e.code] ?? e.message;
   }
-  if (e instanceof BufferUncertainError) return "Buffer didn't respond in time.";
+  if (e instanceof BufferUncertainError) return "Buffer took too long to answer.";
   return "Something went wrong talking to Buffer. Please try again.";
 }
 
@@ -306,16 +306,15 @@ export async function findCreatedPost(
 /** Friendly wording for typed createPost/createIdea errors; the raw message is logged server-side. */
 export function friendlyMutationMessage(typename: string, raw: string): string {
   if (/fetch (image|video)|media|dimensions/i.test(raw)) {
-    return "Buffer couldn't download the media. Make sure the URL is public, direct, HTTPS and won't expire.";
+    return "Buffer couldn't open your image or video. Make sure the link is public and won't expire.";
   }
   if (/cannot exceed|too long|characters/i.test(raw)) return raw; // Buffer's limit messages are already clear
   if (/channel not found/i.test(raw) || typename === "NotFoundError") {
-    return "That channel wasn't found. Refresh your channels and try again.";
+    return "We couldn't find this channel in Buffer. Refresh your channels and try again.";
   }
   if (typename === "LimitReachedError" || /limit/i.test(raw)) {
-    return "This channel has reached a Buffer limit (queue or plan). Free up space in Buffer or choose another time.";
+    return "This channel's Buffer queue is full. Free up a slot in Buffer or pick another time.";
   }
-  if (typename === "UnauthorizedError") return "Buffer didn't allow this action for this channel.";
-  if (typename === "InvalidInputError" || typename === "PostInvalidInputError") return `Buffer rejected this post: ${raw}`;
-  return `Buffer couldn't create this post: ${raw}`;
+  if (typename === "UnauthorizedError") return "Buffer didn't allow posting to this channel.";
+  return `Buffer couldn't accept this post: ${raw.replace(/^Failed to create post:\s*/i, "")}`;
 }

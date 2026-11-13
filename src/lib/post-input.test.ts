@@ -76,10 +76,10 @@ test("checks: official limits and per-channel metadata", () => {
 test("checks: media, titles, YouTube characters, boards, past times", () => {
   assert.match(checkDraft(base, ch("instagram"), null, now).errors[0], /image or video/);
   assert.ok(checkDraft({ ...base, title: "ok" }, ch("youtube"), image, now).errors.some((e) => /video/.test(e)));
-  assert.ok(checkDraft(base, ch("youtube"), video, now).errors.some((e) => /title/.test(e)));
+  assert.ok(checkDraft(base, ch("youtube"), video, now).errors.some((e) => /title/i.test(e)));
   assert.ok(checkDraft({ ...base, text: "a <b>", title: "t" }, ch("youtube"), video, now).errors.some((e) => /"<" or ">"/.test(e)));
   assert.ok(checkDraft(base, ch("pinterest"), image, now).errors.some((e) => /board/.test(e)));
   assert.ok(
-    checkDraft({ ...base, mode: "customScheduled", dueLocal: "2026-11-13T06:00" }, ch("twitter"), null, now).errors.some((e) => /past/.test(e)),
+    checkDraft({ ...base, mode: "customScheduled", dueLocal: "2026-11-13T06:00" }, ch("twitter"), null, now).errors.some((e) => /passed/.test(e)),
   );
 });

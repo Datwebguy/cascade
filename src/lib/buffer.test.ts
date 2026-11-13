@@ -22,7 +22,7 @@ test("normalizeChannel lifts metadata fields", () => {
 });
 
 test("friendly mutation messages", () => {
-  assert.match(friendlyMutationMessage("InvalidInputError", "Failed to create post: Failed to fetch image dimensions: Not Found"), /couldn't download the media/);
+  assert.match(friendlyMutationMessage("InvalidInputError", "Failed to create post: Failed to fetch image dimensions: Not Found"), /couldn't open your image or video/);
   assert.equal(friendlyMutationMessage("InvalidInputError", "LinkedIn posts cannot exceed 3000 characters."), "LinkedIn posts cannot exceed 3000 characters.");
   assert.match(friendlyMutationMessage("NotFoundError", "Channel not found"), /Refresh your channels/);
 });

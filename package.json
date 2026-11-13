@@ -10,9 +10,11 @@
     "test": "tsx --test src/lib/*.test.ts"
   },
   "dependencies": {
+    "motion": "^14.13.0",
     "next": "15.5.29",
     "react": "19.1.10",
-    "react-dom": "19.1.10"
+    "react-dom": "19.1.10",
+    "simple-icons": "^16.37.0"
   },
   "devDependencies": {
     "@types/node": "^22",

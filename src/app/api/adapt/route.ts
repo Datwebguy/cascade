@@ -12,16 +12,16 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as AdaptRequest | null;
   return withSession(async (ctx) => {
     if (!body?.idea?.trim()) throw new RouteError("Write an idea first.");
-    if (body.idea.length > MAX_IDEA_CHARS) throw new RouteError(`Keep the idea under ${MAX_IDEA_CHARS} characters.`);
+    if (body.idea.length > MAX_IDEA_CHARS) throw new RouteError(`Keep your idea under ${MAX_IDEA_CHARS.toLocaleString()} characters.`);
     if (!body.channelIds?.length) throw new RouteError("Select at least one channel.");
     if ((await incrWindow(`cascade:adapt-count:${ctx.sid}`, 3600)) > MAX_ADAPTS_PER_HOUR) {
-      throw new RouteError("You've drafted a lot this hour. Please wait a bit before drafting again.", 429);
+      throw new RouteError("You've created a lot of posts this hour. Take a short break and try again soon.", 429);
     }
 
     const org = (await organizations(ctx)).find((o) => o.id === body.organizationId);
-    if (!org) throw new RouteError("Unknown organization.");
+    if (!org) throw new RouteError("We couldn't find that Buffer workspace. Refresh and try again.");
     const channels = body.channelIds.map((id) => org.channels.find((c) => c.id === id));
-    if (channels.some((c) => !c || !platformFor(c.service).supported)) throw new RouteError("One of the channels can't be used.");
+    if (channels.some((c) => !c || !platformFor(c.service).supported)) throw new RouteError("One of the channels you chose isn't available. Refresh and try again.");
 
     try {
       const drafts = await adaptIdea({ idea: body.idea, title: body.title, media: body.media, channels: channels as NonNullable<(typeof channels)[number]>[] });

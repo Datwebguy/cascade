@@ -25,26 +25,26 @@ export async function POST(req: NextRequest) {
 
 async function publish(ctx: Ctx, body: PublishRequest | null): Promise<PublishResponse> {
   if (!body?.organizationId || !body.idea?.text?.trim() || !body.drafts?.length) {
-    throw new RouteError("Idea text and at least one channel are required.");
+    throw new RouteError("Write an idea and choose at least one channel.");
   }
   const org = (await organizations(ctx)).find((o) => o.id === body.organizationId);
-  if (!org) throw new RouteError("Unknown organization.");
+  if (!org) throw new RouteError("We couldn't find that Buffer workspace. Refresh and try again.");
 
   if (body.media) {
     const check = await checkMediaUrl(body.media.url);
-    if (!check.ok) throw new RouteError(check.message ?? "The media URL can't be used.");
+    if (!check.ok) throw new RouteError(check.message ?? "That image or video link can't be used.");
     body.media.kind = check.kind!;
   }
 
   // Validate everything first so obviously invalid posts never spend API quota.
   const prepared = body.drafts.map((draft) => {
     const channel = org.channels.find((c) => c.id === draft.channelId);
-    if (!channel || !platformFor(channel.service).supported) return { draft, channel: null, errors: ["Channel not available."] };
+    if (!channel || !platformFor(channel.service).supported) return { draft, channel: null, errors: ["This channel isn't available."] };
     return { draft, channel, errors: checkDraft(draft, channel, body.media).errors };
   });
   const invalid = prepared.filter((p) => p.errors.length);
   if (invalid.length) {
-    throw new RouteError(`Fix ${invalid.length} draft${invalid.length === 1 ? "" : "s"} before sending.`);
+    throw new RouteError(`${invalid.length === 1 ? "One post needs" : `${invalid.length} posts need`} attention before sending.`);
   }
 
   // 1. Save the original idea (or reuse the saved Idea the user started from).
@@ -65,12 +65,12 @@ async function publish(ctx: Ctx, body: PublishRequest | null): Promise<PublishRe
       ideaId = ideaIdFrom(createIdea);
       if (!ideaId) {
         console.error("createIdea typed error", createIdea);
-        ideaMessage = "message" in createIdea ? friendlyMutationMessage(createIdea.__typename, createIdea.message) : "The idea wasn't saved.";
+        ideaMessage = "message" in createIdea ? friendlyMutationMessage(createIdea.__typename, createIdea.message) : "Your idea couldn't be saved to Buffer Ideas.";
       }
     } catch (e) {
       if (e instanceof BufferError && (e.code === "UNAUTHORIZED" || e.code === "RATE_LIMIT_EXCEEDED")) throw e;
       console.error("createIdea failed", e);
-      ideaMessage = "The idea couldn't be saved to Buffer Ideas.";
+      ideaMessage = "Your idea couldn't be saved to Buffer Ideas, but your posts were still sent.";
     }
   }
 
@@ -110,8 +110,8 @@ async function verify(ctx: Ctx, organizationId: string, channelId: string, since
   try {
     const found = await findCreatedPost(ctx.token, { organizationId, channelId, since, ideaId, text });
     if (found) return { channelId, outcome: "created", postId: found.id, status: found.status, dueAt: found.dueAt };
-    return { channelId, outcome: "failed", message: "Buffer didn't respond in time and the post wasn't created. It's safe to retry." };
+    return { channelId, outcome: "failed", message: "Buffer took too long and the post wasn't created. It's safe to try again." };
   } catch {
-    return { channelId, outcome: "unknown", message: "Buffer didn't respond in time. Check this channel's queue in Buffer before retrying, so it isn't posted twice." };
+    return { channelId, outcome: "unknown", message: "Buffer was slow to answer. Check this channel in Buffer before trying again." };
   }
 }

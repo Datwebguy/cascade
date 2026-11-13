@@ -38,17 +38,17 @@ export async function checkMediaUrl(raw: string): Promise<MediaCheck> {
   try {
     url = new URL(raw.trim());
   } catch {
-    return { ok: false, message: "That isn't a valid URL." };
+    return { ok: false, message: "That doesn't look like a link. Paste the full address, starting with https://" };
   }
-  if (url.protocol !== "https:") return { ok: false, message: "Buffer requires an HTTPS (https://) media URL." };
+  if (url.protocol !== "https:") return { ok: false, message: "Use a secure link that starts with https://" };
   if (/(drive\.google\.com|dropbox\.com|onedrive\.live\.com|1drv\.ms)$/i.test(url.hostname)) {
-    return { ok: false, message: "Share links from Drive/Dropbox/OneDrive open a preview page, not the file. Use a direct file URL." };
+    return { ok: false, message: "Drive, Dropbox and OneDrive links open a preview page, not the file itself. Use a direct link to the image or video." };
   }
 
   try {
     await assertPublicHost(url.hostname);
   } catch {
-    return { ok: false, message: "That address isn't publicly reachable." };
+    return { ok: false, message: "That link isn't publicly available." };
   }
 
   let res: Response;
@@ -58,14 +58,14 @@ export async function checkMediaUrl(raw: string): Promise<MediaCheck> {
       res = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, redirect: "manual", signal: AbortSignal.timeout(8000) });
     }
   } catch {
-    return { ok: false, message: "Couldn't reach that URL. Check it opens in a private browser window." };
+    return { ok: false, message: "We couldn't open that link. Check it opens in a private browser window without signing in." };
   }
 
   if (res.status >= 300 && res.status < 400) {
-    return { ok: false, message: "That URL redirects. Buffer needs the direct file URL." };
+    return { ok: false, message: "That link forwards somewhere else. Use the direct link to the file." };
   }
   if (!res.ok && res.status !== 206) {
-    return { ok: false, message: `The URL returned HTTP ${res.status}. It must load without logging in.` };
+    return { ok: false, message: res.status === 404 ? "Nothing was found at that link." : "That link needs a sign-in or is blocked. Use a public link." };
   }
   const contentType = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
   if (contentType.startsWith("image/")) return { ok: true, kind: "image", contentType };
@@ -74,7 +74,7 @@ export async function checkMediaUrl(raw: string): Promise<MediaCheck> {
     ok: false,
     contentType,
     message: contentType.startsWith("text/html")
-      ? "That URL is a web page, not an image or video file."
-      : `Unsupported file type (${contentType || "unknown"}). Use an image or video.`,
+      ? "That link opens a web page, not an image or video."
+      : "That file isn't an image or video.",
   };
 }

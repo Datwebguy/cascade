@@ -79,7 +79,10 @@ const SCHEMA = {
 
 async function complete(messages: { role: "system" | "user"; content: string }[]) {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new AiError("AI drafting isn't configured (OPENAI_API_KEY is missing).");
+  if (!key) {
+    console.error("OPENAI_API_KEY is not set");
+    throw new AiError("Writing posts isn't available right now. You can write them yourself instead.");
+  }
   let res: Response;
   try {
     res = await fetch(OPENAI_URL, {
@@ -90,7 +93,7 @@ async function complete(messages: { role: "system" | "user"; content: string }[]
     });
   } catch (e) {
     console.error("OpenAI request failed", e);
-    throw new AiError("The AI drafting service didn't respond. Please try again.");
+    throw new AiError("That took too long. Please try again.");
   }
   const json = (await res.json().catch(() => ({}))) as {
     choices?: { message?: { content?: string; refusal?: string } }[];
@@ -98,14 +101,14 @@ async function complete(messages: { role: "system" | "user"; content: string }[]
   };
   if (!res.ok) {
     console.error("OpenAI error", res.status, json.error?.message);
-    throw new AiError(res.status === 429 ? "The AI drafting service is busy. Please try again shortly." : "AI drafting failed. Please try again.");
+    throw new AiError(res.status === 429 ? "Lots of people are writing posts right now. Please try again in a moment." : "We couldn't write your posts this time. Please try again.");
   }
   const msg = json.choices?.[0]?.message;
-  if (msg?.refusal) throw new AiError("The AI declined to adapt this idea. Try rephrasing it.");
+  if (msg?.refusal) throw new AiError("We couldn't write posts for this idea. Try rephrasing it.");
   try {
     return (JSON.parse(msg?.content ?? "") as { drafts: { channelId: string; text: string; title: string | null }[] }).drafts;
   } catch {
-    throw new AiError("AI drafting returned an unexpected response. Please try again.");
+    throw new AiError("We couldn't write your posts this time. Please try again.");
   }
 }
 

@@ -5,7 +5,7 @@ import { RouteError, withSession } from "../handler";
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as { url?: string } | null;
   return withSession(async () => {
-    if (!body?.url) throw new RouteError("A URL is required.");
+    if (!body?.url) throw new RouteError("Paste a link first.");
     return checkMediaUrl(body.url);
   });
 }

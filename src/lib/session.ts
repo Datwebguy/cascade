@@ -100,7 +100,7 @@ export async function getAccessToken(): Promise<{ sid: string; token: string } |
     }
     await sleep(300); // someone else is refreshing; wait for their result
   }
-  throw new Error("Timed out waiting for the Buffer session to refresh. Please try again.");
+  throw new Error("We couldn't refresh your Buffer connection. Please try again.");
 }
 
 /** Drop the stored tokens (e.g. after Buffer reports the grant was revoked). */

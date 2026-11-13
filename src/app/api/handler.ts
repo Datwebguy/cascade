@@ -36,9 +36,9 @@ export async function withSession(fn: (ctx: Ctx) => Promise<unknown>) {
     ctx = t && { sid: t.sid, token: t.token };
   } catch (e) {
     console.error("Session error", e);
-    return jsonError("Couldn't load your session. Please try again.", 503);
+    return jsonError("We couldn't load your account. Please refresh the page.", 503);
   }
-  if (!ctx) return jsonError("Not connected to Buffer.", 401, { code: "UNAUTHORIZED" });
+  if (!ctx) return jsonError("Please connect your Buffer account.", 401, { code: "UNAUTHORIZED" });
 
   try {
     const body = await fn(ctx);

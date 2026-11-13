@@ -1,44 +1,45 @@
+import { Logo } from "@/components/Logo";
+
 export const metadata = { title: "Privacy · Cascade" };
 
 export default function Privacy() {
   return (
     <main className="legal">
+      <a href="/" aria-label="Cascade home">
+        <Logo />
+      </a>
       <h1>Privacy</h1>
-      <p className="lede">What Cascade does with your data, in plain terms.</p>
+      <p>What Cascade does with your information, in plain words.</p>
 
       <h2>Your Buffer connection</h2>
       <p>
-        When you connect, Buffer gives Cascade an access token and a refresh token for the permissions you approve. They are
-        kept only in Cascade&apos;s server-side session store, never in your browser, and are deleted when you
-        click Disconnect or after 30 days without use. You can also revoke Cascade at any time in your Buffer settings.
+        When you connect, Buffer gives Cascade permission to act for you with the access you approve. That permission is
+        stored securely on our server, never in your browser. It&apos;s deleted when you sign out, or after 30 days of not
+        using Cascade. You can also remove Cascade at any time from your Buffer account settings.
       </p>
 
-      <h2>What Cascade reads and writes</h2>
+      <h2>What Cascade reads and creates</h2>
       <ul>
-        <li>Reads your organizations, channels and saved Ideas so you can choose where to post.</li>
-        <li>Creates an Idea with your original text, and creates one post per channel you choose.</li>
-        <li>Reads recent posts on a channel only to confirm whether a post was created when Buffer didn&apos;t respond in time.</li>
+        <li>Reads your Buffer workspaces, channels and saved ideas, so you can choose where to post.</li>
+        <li>Saves your original idea to Buffer Ideas, and creates one post for each channel you choose.</li>
+        <li>Looks at recent posts on a channel only to check whether a post went through when Buffer was slow to answer.</li>
       </ul>
-      <p>Cascade does not read post analytics and does not post anything you haven&apos;t reviewed and confirmed.</p>
+      <p>Cascade never posts anything you haven&apos;t reviewed and confirmed, and doesn&apos;t read your analytics.</p>
 
-      <h2>AI drafting</h2>
+      <h2>Writing your posts</h2>
       <p>
-        To adapt your idea, the idea text, optional title, media type and the names and types of the selected channels are
-        sent to OpenAI&apos;s API. Cascade does not send your Buffer tokens or media files to OpenAI.
+        To write a post for each channel, your idea, its title, whether you attached an image or video, and the names and
+        types of the channels you chose are sent to OpenAI. Your Buffer login and your media files are never sent.
       </p>
 
-      <h2>Media</h2>
+      <h2>Images and videos</h2>
       <p>
-        Cascade checks that a media URL you paste is publicly reachable. The file itself is fetched by Buffer when your post
-        goes out; Cascade does not store it.
+        Cascade checks that a link you paste can be opened publicly. Buffer downloads the file itself when your post goes
+        out. Cascade doesn&apos;t keep a copy.
       </p>
 
-      <h2>Contact</h2>
-      <p>Questions or deletion requests: open an issue on the project&apos;s repository.</p>
-
-      <p>
-        <a href="/">← Back to Cascade</a>
-      </p>
+      <h2>Questions</h2>
+      <p>Get in touch through the project&apos;s page to ask a question or request that your data be deleted.</p>
     </main>
   );
 }
