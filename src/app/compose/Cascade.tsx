@@ -211,7 +211,7 @@ export default function Cascade() {
     setTitle("");
     setIdeaText("");
     setExistingIdeaId(null);
-    mediaCheck.change("");
+    mediaCheck.clear();
     setSelected(new Set());
     setDrafts([]);
     setResult(null);
@@ -226,7 +226,7 @@ export default function Cascade() {
       .join(" · ");
   })();
 
-  const canCreate = ideaText.trim().length > 0 && chosen.length > 0 && mediaCheck.state.status !== "checking" && mediaCheck.state.status !== "error";
+  const canCreate = ideaText.trim().length > 0 && chosen.length > 0 && !["checking", "uploading", "error"].includes(mediaCheck.state.status);
 
   return (
     <div className="app">
@@ -294,6 +294,9 @@ export default function Cascade() {
                 mediaUrl={mediaCheck.url}
                 onMediaUrl={mediaCheck.change}
                 mediaState={mediaCheck.state}
+                canUpload={mediaCheck.canUpload}
+                onMediaFile={mediaCheck.uploadFile}
+                onMediaClear={mediaCheck.clear}
                 selected={selected}
                 onToggle={(id) =>
                   setSelected((prev) => {

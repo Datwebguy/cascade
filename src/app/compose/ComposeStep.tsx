@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useRef, useState } from "react";
 import { platformFor } from "@/lib/platforms";
 import type { Channel, IdeaSummary, Organization } from "@/lib/types";
 import { ChannelIdentity, Icon, MediaPreview } from "./ui";
@@ -26,6 +27,9 @@ export interface ComposeProps {
   mediaUrl: string;
   onMediaUrl: (v: string) => void;
   mediaState: MediaState;
+  canUpload: boolean;
+  onMediaFile: (file: File) => void;
+  onMediaClear: () => void;
   selected: Set<string>;
   onToggle: (id: string) => void;
   onSelectAll: (all: boolean) => void;
@@ -103,44 +107,14 @@ export function ComposeStep(p: ComposeProps) {
             )}
           </section>
 
-          <section className="card">
-            <div className="card-head">
-              <h2>Photo or video</h2>
-              <span className="pill">Optional</span>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="media-url">Link to your image or video</label>
-              <input
-                id="media-url"
-                type="url"
-                inputMode="url"
-                value={p.mediaUrl}
-                onChange={(e) => p.onMediaUrl(e.target.value)}
-                placeholder="https://…"
-              />
-              <span className="hint">Use a direct link that anyone can open. Links to Google Drive or Dropbox pages won&apos;t work.</span>
-            </div>
-            <AnimatePresence mode="wait">
-              {p.mediaState.status === "checking" && (
-                <motion.p key="checking" className="media-status" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <span className="muted">Checking your link…</span>
-                </motion.p>
-              )}
-              {p.mediaState.status === "error" && (
-                <motion.p key="error" className="media-status error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <Icon name="alert" size={16} /> {p.mediaState.message}
-                </motion.p>
-              )}
-              {p.mediaState.status === "ok" && p.mediaState.media && (
-                <motion.div key="ok" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                  <p className="media-status ok">
-                    <Icon name="check" size={16} /> {p.mediaState.media.kind === "video" ? "Video" : "Image"} ready
-                  </p>
-                  <MediaPreview media={p.mediaState.media} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </section>
+          <MediaCard
+            url={p.mediaUrl}
+            onUrl={p.onMediaUrl}
+            state={p.mediaState}
+            canUpload={p.canUpload}
+            onFile={p.onMediaFile}
+            onClear={p.onMediaClear}
+          />
 
           {p.draftError && (
             <div className="notice error" role="alert" style={{ marginTop: "1rem" }}>
@@ -214,5 +188,123 @@ export function ComposeStep(p: ComposeProps) {
         </aside>
       </div>
     </>
+  );
+}
+
+function MediaCard(p: {
+  url: string;
+  onUrl: (v: string) => void;
+  state: MediaState;
+  canUpload: boolean;
+  onFile: (f: File) => void;
+  onClear: () => void;
+}) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [showLink, setShowLink] = useState(!p.canUpload);
+  const has = p.state.status === "ok" || p.state.status === "uploading";
+  const preview = p.state.previewUrl ?? p.state.media?.url;
+
+  return (
+    <section className="card">
+      <div className="card-head">
+        <h2>Photo or video</h2>
+        <span className="pill">Optional</span>
+      </div>
+
+      {has && p.state.media && preview ? (
+        <div className="media-attached">
+          <div className="media-preview">
+            {p.state.media.kind === "video" ? (
+              <video src={preview} controls muted playsInline preload="metadata" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Your attached image" />
+            )}
+            {p.state.status === "uploading" && (
+              <div className="upload-veil">
+                <span>Uploading… {p.state.progress ?? 0}%</span>
+                <div className="progress"><motion.div className="progress-fill" animate={{ width: `${p.state.progress ?? 0}%` }} /></div>
+              </div>
+            )}
+          </div>
+          <div className="row between" style={{ marginTop: "0.6rem" }}>
+            <span className={`media-status ${p.state.status === "ok" ? "ok" : ""}`} style={{ marginTop: 0 }}>
+              {p.state.status === "ok" ? (
+                <><Icon name="check" size={16} /> {p.state.media.kind === "video" ? "Video" : "Image"} ready</>
+              ) : (
+                <span className="muted">{p.state.fileName}</span>
+              )}
+            </span>
+            <button className="btn quiet sm" onClick={p.onClear}>
+              <Icon name="close" size={14} /> {p.state.status === "uploading" ? "Cancel" : "Remove"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {p.canUpload && (
+            <div
+              className="dropzone"
+              data-dragging={dragging}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                const f = e.dataTransfer.files?.[0];
+                if (f) p.onFile(f);
+              }}
+            >
+              <span className="dropzone-icon"><Icon name="image" size={22} /></span>
+              <p><strong>Add a photo or video</strong></p>
+              <p className="hint">JPG, PNG, GIF, WebP, MP4 or MOV</p>
+              <button className="btn sm" onClick={() => fileInput.current?.click()} style={{ marginTop: "0.6rem" }}>
+                Upload from your device
+              </button>
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) p.onFile(f);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          )}
+
+          {p.canUpload && !showLink ? (
+            <button className="btn quiet sm" style={{ marginTop: "0.5rem" }} onClick={() => setShowLink(true)}>
+              Or paste a link instead
+            </button>
+          ) : (
+            <div className="field" style={{ marginTop: p.canUpload ? "0.8rem" : 0 }}>
+              <label className="label" htmlFor="media-url">Link to your image or video</label>
+              <input id="media-url" type="url" inputMode="url" value={p.url} onChange={(e) => p.onUrl(e.target.value)} placeholder="https://…" />
+              <span className="hint">Use a direct link that anyone can open. Links to Google Drive or Dropbox pages won&apos;t work.</span>
+            </div>
+          )}
+        </>
+      )}
+
+      <AnimatePresence mode="wait">
+        {p.state.status === "checking" && (
+          <motion.p key="checking" className="media-status" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <span className="muted">Checking your link…</span>
+          </motion.p>
+        )}
+        {p.state.status === "error" && (
+          <motion.p key="error" className="media-status error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <Icon name="alert" size={16} /> {p.state.message}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </section>
   );
 }

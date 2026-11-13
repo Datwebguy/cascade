@@ -34,8 +34,10 @@ export default function Privacy() {
 
       <h2>Images and videos</h2>
       <p>
-        Cascade checks that a link you paste can be opened publicly. Buffer downloads the file itself when your post goes
-        out. Cascade doesn&apos;t keep a copy.
+        Buffer needs a public link to the photo or video it posts. When you upload a file, Cascade stores it with Vercel
+        Blob at a long, hard-to-guess public address so Buffer can fetch it when your post goes out. Anyone with that exact
+        link can open the file, so only upload media you intend to publish. If you paste a link instead, Cascade only checks
+        that it opens publicly and doesn&apos;t keep a copy.
       </p>
 
       <h2>Questions</h2>
