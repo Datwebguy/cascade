@@ -1,49 +1,79 @@
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { issueSignedToken } from "@vercel/blob";
+import { handleUpload, handleUploadPresigned, type HandleUploadBody, type HandleUploadPresignedBody } from "@vercel/blob/client";
 import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { sessionId } from "@/lib/session";
 import { MEDIA_TYPES, MAX_UPLOAD_BYTES } from "@/lib/upload";
 
 /**
- * Issues short-lived tokens so the browser can upload a photo or video straight to Vercel Blob.
- * Buffer has no upload endpoint; it needs a public, stable HTTPS link, which Blob provides.
+ * Lets the browser upload a photo or video straight to Vercel Blob. Buffer has no upload
+ * endpoint; it needs a public, stable HTTPS link, which Blob provides.
+ *
+ * Two setups are supported:
+ *  - "token":     BLOB_READ_WRITE_TOKEN is set (classic connection)
+ *  - "presigned": BLOB_STORE_ID with Vercel's built-in OIDC sign-in (newer connections)
  */
+type Mode = "token" | "presigned" | null;
+function mode(): Mode {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return "token";
+  if (process.env.BLOB_STORE_ID) return "presigned";
+  return null;
+}
+
+const folderFor = (sid: string) => `uploads/${createHash("sha256").update(sid).digest("hex").slice(0, 16)}/`;
+const limits = () => ({
+  allowedContentTypes: MEDIA_TYPES,
+  maximumSizeInBytes: MAX_UPLOAD_BYTES,
+  validUntil: Date.now() + 10 * 60 * 1000,
+});
+
+async function authorize(pathname: string) {
+  const sid = await sessionId();
+  if (!sid) throw new Error("not-signed-in");
+  if (!pathname.startsWith(folderFor(sid))) throw new Error("bad-path");
+}
+
 export async function POST(req: NextRequest) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json({ error: "Uploading isn't available right now. Paste a link instead." }, { status: 503 });
-  }
-  const body = (await req.json().catch(() => null)) as HandleUploadBody | null;
+  const m = mode();
+  if (!m) return NextResponse.json({ error: "Uploading isn't available right now. Paste a link instead." }, { status: 503 });
+  const body = (await req.json().catch(() => null)) as (HandleUploadBody | HandleUploadPresignedBody) | null;
   if (!body) return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 400 });
 
   try {
-    const result = await handleUpload({
-      body,
+    if (m === "token") {
+      const result = await handleUpload({
+        body: body as HandleUploadBody,
+        request: req,
+        onBeforeGenerateToken: async (pathname) => {
+          await authorize(pathname);
+          return { ...limits(), addRandomSuffix: true };
+        },
+      });
+      return NextResponse.json(result);
+    }
+    const result = await handleUploadPresigned({
+      body: body as HandleUploadPresignedBody,
       request: req,
-      onBeforeGenerateToken: async (pathname) => {
-        const sid = await sessionId();
-        if (!sid) throw new Error("not-signed-in");
-        const owner = createHash("sha256").update(sid).digest("hex").slice(0, 16);
-        if (!pathname.startsWith(`uploads/${owner}/`)) throw new Error("bad-path");
-        return {
-          allowedContentTypes: MEDIA_TYPES,
-          maximumSizeInBytes: MAX_UPLOAD_BYTES,
-          addRandomSuffix: true,
-          validUntil: Date.now() + 10 * 60 * 1000,
-        };
+      getSignedToken: async (pathname) => {
+        await authorize(pathname);
+        const l = limits();
+        const token = await issueSignedToken({ pathname, operations: ["put"], ...l });
+        return { token, urlOptions: { ...l, addRandomSuffix: true } };
       },
     });
     return NextResponse.json(result);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "";
-    console.error("Upload token error", msg);
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Upload authorization error", msg);
     if (msg === "not-signed-in") return NextResponse.json({ error: "Please connect your Buffer account first." }, { status: 401 });
     return NextResponse.json({ error: "That upload couldn't start. Please try again." }, { status: 400 });
   }
 }
 
-/** Where the browser should put its uploads (a per-session folder). */
+/** Tells the browser whether uploads are on, which method to use, and its folder. */
 export async function GET() {
   const sid = await sessionId();
-  if (!sid || !process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ enabled: false });
-  return NextResponse.json({ enabled: true, folder: `uploads/${createHash("sha256").update(sid).digest("hex").slice(0, 16)}/` });
+  const m = mode();
+  if (!sid || !m) return NextResponse.json({ enabled: false });
+  return NextResponse.json({ enabled: true, mode: m, folder: folderFor(sid) });
 }

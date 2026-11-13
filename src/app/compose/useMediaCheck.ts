@@ -1,6 +1,6 @@
 "use client";
 
-import { upload } from "@vercel/blob/client";
+import { upload, uploadPresigned } from "@vercel/blob/client";
 import { useEffect, useRef, useState } from "react";
 import { checkFile, IMAGE_TYPES } from "@/lib/upload";
 import type { Media } from "@/lib/types";
@@ -22,6 +22,7 @@ export function useMediaCheck() {
   const [url, setUrl] = useState("");
   const [state, setState] = useState<MediaState>({ status: "idle" });
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<"token" | "presigned">("token");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef("");
   const abort = useRef<AbortController | null>(null);
@@ -29,7 +30,10 @@ export function useMediaCheck() {
   useEffect(() => {
     fetch("/api/upload")
       .then((r) => r.json())
-      .then((j: { enabled: boolean; folder?: string }) => setUploadFolder(j.enabled ? j.folder ?? null : null))
+      .then((j: { enabled: boolean; folder?: string; mode?: "token" | "presigned" }) => {
+        setUploadFolder(j.enabled ? j.folder ?? null : null);
+        if (j.mode) setUploadMode(j.mode);
+      })
       .catch(() => setUploadFolder(null));
   }, []);
 
@@ -83,7 +87,8 @@ export function useMediaCheck() {
     setState({ status: "uploading", progress: 0, previewUrl, fileName: file.name, media: { url: previewUrl, kind } });
     try {
       const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "") || `media.${kind === "image" ? "jpg" : "mp4"}`;
-      const blob = await upload(`${uploadFolder}${safeName}`, file, {
+      const send = uploadMode === "presigned" ? uploadPresigned : upload;
+      const blob = await send(`${uploadFolder}${safeName}`, file, {
         access: "public",
         handleUploadUrl: "/api/upload",
         contentType: file.type,
