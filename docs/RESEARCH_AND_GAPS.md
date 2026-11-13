@@ -166,3 +166,20 @@ Still open: question 2 (what is missing from the idea), the production domain, a
 6. Add per-network options (first comment, Instagram type, YouTube title, etc.) as agreed.
 7. Deploy, register the production redirect URI, smoke-test with a real Buffer account using `saveToDraft`.
 8. Prepare submission: summary, video script, client ID.
+
+## 7. Status (13 Nov 2026)
+
+Done and verified against a local Buffer mock, real OpenAI, and a real media URL:
+
+- All "Wrong" items in section 4 (HTTPS redirect URIs, official limits and counting, `Retry-After` handling, cached channels, HTTPS-only media, YouTube `<`/`>`, friendly errors, scopes).
+- All "Hard-coded" items in section 4 that can be derived from Buffer (limits, Mastodon `maxCharacters`, X subscription, Pinterest boards, channel timezone, Ideas pagination, media type from Content-Type). Stock phrases removed; forced YouTube/Instagram settings removed.
+- AI adaptation (OpenAI), Redis token store with refresh lock, safe retry after timeouts, privacy page.
+- Deployed to Vercel with Redis connected: https://cascade-three-brown.vercel.app. Buffer's login page accepts the app's authorization request.
+
+Not yet verified:
+
+- The complete flow against a **real Buffer account** (token exchange, `channels` with metadata fragments, `ideas`, `createIdea`, `createPost`). The queries follow the published reference but have not run against the live API.
+
+Not built (candidates for "next steps"): first comments, threaded posts, Instagram user tags, video thumbnail offset, multi-image/carousel, team workspace.
+
+Submission kit: see `docs/SUBMISSION.md`.
