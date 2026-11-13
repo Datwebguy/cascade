@@ -12,15 +12,15 @@ Deadline: **13 November 2026, 11:59pm Pacific**. Submissions are final once sent
 - [ ] Team details and contact information
 - [ ] Optional: build-in-public posts that mention Buffer Commit
 
-## 300-word summary (draft — edit to your own voice)
+## 300-word summary
 
 Cascade is for people who post every day across several social networks with Buffer: founders announcing what they shipped, small businesses sharing today's offer, creators promoting new work.
 
 Buffer already solved the posting. What it leaves to you is the writing. X wants it short, LinkedIn wants the story, Instagram wants a caption. So most people either paste the same text everywhere, which reads badly, or rewrite it by hand for every network, every day. I kept skipping that step, so I built Cascade on the Buffer API.
 
-You sign in with Buffer (OAuth with PKCE, as a private App Client) and your real channels load from Buffer. You write the idea once, in your own words, and add a photo or video: upload it from your phone (Cascade hosts it at a stable public link, as Buffer requires) or paste a link. Cascade writes a version for each selected network, in that network's style, and checks every draft against Buffer's own character rules, including X Premium limits read from the channel. It never adds hashtags or emojis you didn't write, and Instagram gets a correctly cropped image when needed.
+You sign in with Buffer (OAuth with PKCE, as a private App Client) and your real channels load from Buffer. You write the idea once, in your own words, and add a photo or video, either uploaded from your phone or pasted as a link. Cascade writes a version for each selected network, in that network's style, and checks every draft against Buffer's own character rules, including X Premium limits read from the channel. It never adds hashtags or emojis you didn't write, and Instagram gets a correctly cropped image when needed.
 
-You review and edit each post, choose per channel between your Buffer queue, a set time in that channel's time zone, or a draft, and send. Cascade saves your original idea to Buffer Ideas with `createIdea`, then creates one Buffer post per channel with `createPost`. Errors are explained in plain words per channel, failed channels can be retried without duplicating the rest, and if Buffer times out, Cascade checks whether the post landed before offering a retry.
+You review and edit each post, choose per channel between your Buffer queue, a set time in that channel's time zone, or a draft, and send. Cascade saves your original idea to Buffer Ideas with createIdea, then creates one Buffer post per channel with createPost. From there Buffer takes over: queued and scheduled posts publish automatically, and drafts wait in Buffer for your final OK. Errors are explained in plain words per channel, failed channels can be retried without duplicating the rest, and if Buffer times out, Cascade checks whether the post landed before offering a retry.
 
 Next: first comments and threads, multi-image posts, saved voice and tone preferences, and a team review step before posts go to Buffer.
 
