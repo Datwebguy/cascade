@@ -15,7 +15,11 @@ export function buildPostInput(args: { draft: Draft; channel: Channel; media: Me
     // Buffer has no "draft" mode: drafts are addToQueue + saveToDraft.
     mode: draft.mode === "saveToDraft" ? "addToQueue" : draft.mode,
   };
-  if (attach) input.assets = [attach.kind === "video" ? { video: { url: attach.url } } : { image: { url: attach.url } }];
+  if (attach) {
+    // Instagram gets the centre-cropped copy when the original's shape isn't one it accepts.
+    const imageUrl = channel.service === "instagram" && attach.instagramUrl ? attach.instagramUrl : attach.url;
+    input.assets = [attach.kind === "video" ? { video: { url: attach.url } } : { image: { url: imageUrl } }];
+  }
   if (draft.mode === "saveToDraft") input.saveToDraft = true;
   if (draft.mode === "customScheduled") {
     if (!draft.dueLocal) throw new Error("A date and time is required for custom scheduling.");

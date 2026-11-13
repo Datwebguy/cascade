@@ -81,3 +81,39 @@ export function sendImage(file: File, onProgress: (pct: number) => void, signal:
     xhr.send(form);
   });
 }
+
+/** Instagram only auto-publishes images with an aspect ratio between 4:5 and 1.91:1. */
+export const IG_MIN_RATIO = 4 / 5;
+export const IG_MAX_RATIO = 1.91;
+
+/** Returns a centre-cropped JPEG that Instagram accepts, or null if the image already fits. */
+export async function instagramVariant(file: File): Promise<File | null> {
+  if (file.type === "image/gif") return null;
+  let img: HTMLImageElement;
+  try {
+    img = await loadImage(file);
+  } catch {
+    return null;
+  }
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+  const ratio = w / h;
+  if (ratio >= IG_MIN_RATIO && ratio <= IG_MAX_RATIO) return null;
+  const target = ratio < IG_MIN_RATIO ? IG_MIN_RATIO : IG_MAX_RATIO;
+  const cw = ratio < IG_MIN_RATIO ? w : Math.round(h * target);
+  const ch = ratio < IG_MIN_RATIO ? Math.round(w / target) : h;
+  const scale = Math.min(1, MAX_EDGE / Math.max(cw, ch));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(cw * scale);
+  canvas.height = Math.round(ch * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(img, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, canvas.width, canvas.height);
+  for (const quality of [0.9, 0.8, 0.65]) {
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", quality));
+    if (blob && blob.size <= MAX_SERVER_UPLOAD_BYTES) {
+      return new File([blob], file.name.replace(/\.[^.]+$/, "") + "-instagram.jpg", { type: "image/jpeg" });
+    }
+  }
+  return null;
+}

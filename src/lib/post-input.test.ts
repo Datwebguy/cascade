@@ -83,3 +83,11 @@ test("checks: media, titles, YouTube characters, boards, past times", () => {
     checkDraft({ ...base, mode: "customScheduled", dueLocal: "2026-11-13T06:00" }, ch("twitter"), null, now).errors.some((e) => /passed/.test(e)),
   );
 });
+
+test("Instagram uses the cropped copy; other networks use the original", () => {
+  const media = { url: "https://cdn.example.com/a.jpg", kind: "image" as const, instagramUrl: "https://cdn.example.com/a-instagram.jpg" };
+  const ig = buildPostInput({ draft: base, channel: ch("instagram"), media, ideaId: null });
+  assert.deepEqual(ig.assets, [{ image: { url: media.instagramUrl } }]);
+  const x = buildPostInput({ draft: base, channel: ch("twitter"), media, ideaId: null });
+  assert.deepEqual(x.assets, [{ image: { url: media.url } }]);
+});

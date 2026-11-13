@@ -34,6 +34,10 @@ async function publish(ctx: Ctx, body: PublishRequest | null): Promise<PublishRe
     const check = await checkMediaUrl(body.media.url);
     if (!check.ok) throw new RouteError(check.message ?? "That image or video link can't be used.");
     body.media.kind = check.kind!;
+    if (body.media.instagramUrl) {
+      const ig = await checkMediaUrl(body.media.instagramUrl);
+      if (!ig.ok || ig.kind !== "image") delete body.media.instagramUrl;
+    }
   }
 
   // Validate everything first so obviously invalid posts never spend API quota.

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { checkFile, IMAGE_TYPES } from "@/lib/upload";
 import type { Media } from "@/lib/types";
 import { api } from "./api";
-import { prepareImage, sendImage } from "./prepareImage";
+import { instagramVariant, prepareImage, sendImage } from "./prepareImage";
 
 export interface MediaState {
   status: "idle" | "checking" | "uploading" | "ok" | "error";
@@ -108,10 +108,23 @@ export function useMediaCheck() {
       let url: string;
       if (kind === "image") {
         const ready = await prepareImage(file);
+        const igFile = await instagramVariant(ready);
         url = await sendImage(ready, (pct) => {
           lastProgress = Date.now();
-          setState((s) => (s.status === "uploading" ? { ...s, progress: pct, slow: false } : s));
+          // Leave a little room for the Instagram copy, when there is one.
+          const shown = igFile ? Math.round(pct * 0.85) : pct;
+          setState((s) => (s.status === "uploading" ? { ...s, progress: shown, slow: false } : s));
         }, controller.signal);
+        if (igFile) {
+          const instagramUrl = await sendImage(igFile, (pct) => {
+            lastProgress = Date.now();
+            setState((s) => (s.status === "uploading" ? { ...s, progress: 85 + Math.round(pct * 0.15) } : s));
+          }, controller.signal).catch(() => undefined);
+          if (instagramUrl) {
+            setState({ status: "ok", media: { url, kind, instagramUrl }, ...base });
+            return;
+          }
+        }
       } else {
         // Videos go straight to storage. No progress callback: that path relies on streaming
         // uploads, which fail on some mobile networks and browsers.

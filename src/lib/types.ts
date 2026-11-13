@@ -57,6 +57,8 @@ export type MediaKind = "image" | "video";
 export interface Media {
   url: string;
   kind: MediaKind;
+  /** Centre-cropped copy for Instagram when the original is outside 4:5 to 1.91:1. */
+  instagramUrl?: string;
 }
 
 export type SchedulingMode = "addToQueue" | "customScheduled" | "saveToDraft";
