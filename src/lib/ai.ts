@@ -17,7 +17,7 @@ Stay true to the author:
 - Never invent facts, numbers, results, quotes, names, offers, dates, or links.
 - Keep the author's links exactly as written and don't add new ones. On Instagram, where links aren't clickable, keep the URL only if the post depends on it.
 - No generic filler or stock calls-to-action ("What do you think?", "Follow for more", "Link in bio", "Let me know in the comments") unless the author asked for engagement. If a closing line is natural for the network, make it specific to this idea.
-- Hashtags: prefer the author's own; add new ones only where the channel's style says they are customary and only if clearly relevant; never on Google Business.
+- Hashtags and emoji: never add any. Use only the hashtags and emoji the author wrote, exactly as written, and only where they fit the channel. If the author wrote none, the post has none.
 - If media is attached, write so the text works alongside it; never describe what you can't see.
 
 Format:
@@ -139,7 +139,7 @@ export async function adaptIdea(args: {
     { role: "user", content: userPrompt(idea, title, media, briefs) },
   ]);
 
-  const byId = new Map(raw.map((d) => [d.channelId, d]));
+  const byId = new Map(raw.map((d) => [d.channelId, { ...d, text: keepAuthorsTagsAndEmoji(d.text ?? "", idea) }]));
   const results: AdaptedDraft[] = channels.map((c) => {
     const d = byId.get(c.id);
     return { channelId: c.id, text: (d?.text ?? "").trim(), title: d?.title?.trim() || null };
@@ -169,7 +169,8 @@ export async function adaptIdea(args: {
     ]).catch(() => [] as typeof raw);
     for (const f of fixed) {
       const i = results.findIndex((r) => r.channelId === f.channelId);
-      if (i >= 0 && f.text?.trim()) results[i] = { channelId: f.channelId, text: f.text.trim(), title: f.title?.trim() || results[i].title };
+      const text = keepAuthorsTagsAndEmoji(f.text ?? "", idea);
+      if (i >= 0 && text) results[i] = { channelId: f.channelId, text, title: f.title?.trim() || results[i].title };
     }
   }
 
@@ -177,4 +178,25 @@ export async function adaptIdea(args: {
     const c = channels.find((x) => x.id === d.channelId)!;
     return { ...d, overLimit: !d.text || countFor(c.service, d.text) > limitFor(c, media?.kind ?? null) || undefined };
   });
+}
+
+const HASHTAG_RE = /(^|[^\p{L}\p{N}_&])#([\p{L}\p{N}_]+)/gu;
+const EMOJI_RE = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D(?:\p{Extended_Pictographic})|\p{Emoji_Modifier}|\p{Regional_Indicator}|\uFE0F)*/gu;
+
+/**
+ * Removes any hashtag or emoji the author didn't write. Cascade adapts the author's words; it
+ * doesn't decorate them.
+ */
+export function keepAuthorsTagsAndEmoji(text: string, idea: string): string {
+  const allowedTags = new Set([...idea.matchAll(HASHTAG_RE)].map((m) => m[2].toLowerCase()));
+  const allowedEmoji = new Set(idea.match(EMOJI_RE) ?? []);
+  const out = text
+    .replace(HASHTAG_RE, (m, lead: string, tag: string) => (allowedTags.has(tag.toLowerCase()) ? m : lead))
+    .replace(EMOJI_RE, (e) => (allowedEmoji.has(e) ? e : ""))
+    // tidy what removal leaves behind
+    .split("\n")
+    .map((line) => line.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+([.,!?;:])/g, "$1").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n");
+  return out.trim();
 }

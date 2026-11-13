@@ -50,3 +50,21 @@ test("missing API key is a clear error", async () => {
   delete process.env.OPENAI_API_KEY;
   await assert.rejects(adaptIdea({ idea: "Idea.", media: null, channels: [ch("x", "twitter")] }), AiError);
 });
+
+import { keepAuthorsTagsAndEmoji } from "./ai";
+
+test("hashtags and emoji the author didn't write are removed", () => {
+  const idea = "Over 900 submissions for the @NEARProtocol hackathon #buildinpublic 🚀";
+  const draft = "Over 900 submissions! 🔥🔥 #NEAR #Web3 #BuildInPublic 🚀\n\n#hackathon #crypto";
+  assert.equal(keepAuthorsTagsAndEmoji(draft, idea), "Over 900 submissions! #BuildInPublic 🚀");
+});
+
+test("keeps mentions, links with #fragments, and the author's own tags", () => {
+  const idea = "Read https://example.com/docs#setup and ping @alice #DevTools";
+  const draft = "Read https://example.com/docs#setup and ping @alice. #DevTools #AI ✨";
+  assert.equal(keepAuthorsTagsAndEmoji(draft, idea), "Read https://example.com/docs#setup and ping @alice. #DevTools");
+});
+
+test("no tags or emoji in the idea means none in the post", () => {
+  assert.equal(keepAuthorsTagsAndEmoji("Ship it daily 💡\n\n#productivity #growth", "Ship it daily"), "Ship it daily");
+});

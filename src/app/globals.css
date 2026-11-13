@@ -304,3 +304,4 @@ textarea { resize: vertical; line-height: 1.55; }
 .file-tile { display: flex; align-items: center; gap: 0.8rem; padding: 0.9rem; border-radius: var(--radius-sm); background: var(--surface-2); }
 .file-tile .dropzone-icon { margin: 0; flex: none; }
 .media-preview { min-height: 6rem; }
+.post .media-preview img, .post .media-preview video { object-fit: contain; max-height: 14rem; }
