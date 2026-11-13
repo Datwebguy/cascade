@@ -14,8 +14,7 @@ const W = 1600, H = 900;
 const GAP = 450; // ms of breathing room after each line
 
 const IDEA =
-  "We just shipped Cascade for #BufferCommit. Write one idea and get a post that fits every channel, ready in Buffer. " +
-  "Your words stay yours: no hashtags or emojis you didn't write. Try it: https://oncascade.vercel.app";
+  "Just shipped Cascade for #BufferCommit: write one idea, get a post made for each of your Buffer channels. https://oncascade.vercel.app";
 const IMAGE = process.env.DEMO_IMAGE || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1600";
 
 const OVERLAY = `
@@ -62,20 +61,35 @@ async function record(name, viewport, run) {
   const page = await ctx.newPage();
   const t0 = Date.now();
   const timeline = [];
+  const cuts = [];
+  let cutMs = 0;
   let current = null;
-  const say = async (id, action) => {
+  // Run a slow wait; the edit keeps a short glimpse of it and removes the rest.
+  const cut = async (fn) => {
+    const a = Date.now();
+    await fn();
+    const b = Date.now();
+    if (b - a > 1400) {
+      cuts.push([(a - t0) / 1000 + 0.6, (b - t0) / 1000 - 0.3]);
+      cutMs += b - a - 900;
+    }
+  };
+  const say = async (id, action, after) => {
     const s = seg[id];
     current = [s.chip, s.text];
     const start = Date.now();
     timeline.push({ id, t: (start - t0) / 1000 });
     await page.evaluate(([chip, text]) => { window.__lastOv = [chip, text]; window.__ov && window.__ov(chip, text); }, current).catch(() => {});
+    const cutBefore = cutMs;
     if (action) await action();
-    const left = durations[id] * 1000 + GAP - (Date.now() - start);
+    // Only time that survives the edit counts toward the line's length.
+    const left = durations[id] * 1000 + GAP - (Date.now() - start - (cutMs - cutBefore));
     if (left > 0) await sleep(left);
+    if (after) await after();
   };
   // Re-apply the caption after navigations.
   page.on("load", () => current && page.evaluate((c) => { window.__lastOv = c; window.__ov && window.__ov(...c); }, current).catch(() => {}));
-  await run(page, say);
+  await run(page, say, cut);
   await page.evaluate(() => window.__ov && window.__ov("", "")).catch(() => {});
   await sleep(600);
   const video = page.video();
@@ -83,7 +97,7 @@ async function record(name, viewport, run) {
   await browser.close();
   const file = path.join(outDir, `${name}.webm`);
   fs.renameSync(await video.path(), file);
-  return { name, file, timeline };
+  return { name, file, timeline, cuts };
 }
 
 async function card(name, ids, holdAfter = 800) {
@@ -103,76 +117,86 @@ async function card(name, ids, holdAfter = 800) {
   parts.push(await card("answer", ["s02"], 500));
 
   parts.push(
-    await record("app", { width: W, height: H }, async (page, say) => {
+    await record("app", { width: W, height: H }, async (page, say, cut) => {
       await page.goto(baseUrl + "/");
-      await sleep(1200);
+      await sleep(1000);
       await say("s04", async () => {
         await page.hover("text=Connect your Buffer account");
-        await sleep(1300);
-        await page.goto(baseUrl + "/api/dev/login");
-        await page.waitForSelector(".channel-row", { timeout: 30000 });
+        await sleep(1100);
+        await cut(async () => {
+          await page.goto(baseUrl + "/api/dev/login");
+          await page.waitForSelector(".channel-row", { timeout: 30000 });
+        });
       });
       await say("s05", async () => {
         await page.click("#idea-text");
-        await page.keyboard.type(IDEA, { delay: 14 });
+        await page.keyboard.type(IDEA, { delay: 11 });
       });
-      await say("s06", async () => {
-        const toLink = page.locator("text=Or paste a link instead");
-        if (await toLink.isVisible().catch(() => false)) {
-          await page.locator(".dropzone").hover().catch(() => {});
-          await sleep(900);
-          await toLink.click();
-        }
-        await page.fill("#media-url", IMAGE);
-        await page.waitForSelector(".media-status.ok", { timeout: 30000 });
-        await page.evaluate(() => window.scrollTo({ top: 400, behavior: "smooth" }));
-      });
+      await say(
+        "s06",
+        async () => {
+          await page.locator(".dropzone").scrollIntoViewIfNeeded().catch(() => {});
+          await page.evaluate(() => document.querySelector(".dropzone")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+          await sleep(500);
+          await page.locator(".dropzone .btn").hover().catch(() => {});
+          await sleep(1300);
+          const toLink = page.locator("text=Or paste a link instead");
+          if (await toLink.isVisible().catch(() => false)) await toLink.click();
+          await page.click("#media-url");
+          await page.keyboard.type(IMAGE, { delay: 9 });
+        },
+        async () => {
+          await cut(() => page.waitForSelector(".media-status.ok", { timeout: 30000 }));
+          await page.evaluate(() => document.querySelector(".media-preview")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+          await sleep(1600);
+        },
+      );
       await say("s07", async () => {
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+        await sleep(300);
         const rows = page.locator('.channel-row:not([data-disabled="true"])');
         const n = await rows.count();
         for (let i = 0; i < n; i++) {
           await rows.nth(i).click();
-          await sleep(250);
+          await sleep(220);
         }
       });
-      await say("s08", async () => {
-        await page.click(".actionbar .btn.primary");
-        await page.waitForSelector(".post", { timeout: 90000 });
-        await sleep(800);
-      });
-      await say("s09", async () => {
-        await page.locator(".meter").first().hover();
-      });
-      await say("s10", async () => {
-        await page.evaluate(() => window.scrollBy({ top: 260, behavior: "smooth" }));
-      });
-      await say("s11", async () => {
-        await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
-        await sleep(400);
-        const rewrite = page.locator(".post .post-head button").first();
-        await rewrite.click();
-        await page.waitForFunction(() => !document.querySelector(".post-head button[disabled]"), null, { timeout: 60000 }).catch(() => {});
-      });
+      await say(
+        "s08",
+        () => page.click(".actionbar .btn.primary"),
+        async () => {
+          await cut(() => page.waitForSelector(".post", { timeout: 90000 }));
+          await sleep(700);
+        },
+      );
+      await say("s09", () => page.locator(".meter").first().hover());
+      await say("s10", () => page.evaluate(() => window.scrollBy({ top: 220, behavior: "smooth" })));
+      await say(
+        "s11",
+        async () => {
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+          await sleep(300);
+          await page.locator(".post .post-head button").first().click();
+        },
+        () => cut(() => page.waitForFunction(() => !document.querySelector(".post-head button[disabled]"), null, { timeout: 60000 }).catch(() => {})),
+      );
       await say("s12", async () => {
-        await page.click('.review-head button[role=radio]:has-text("Draft")');
-        await sleep(600);
         await page.locator('.post button[role=radio]:has-text("Pick a time")').first().click();
-        await sleep(1400);
-        await page.locator('.post button[role=radio]:has-text("Draft")').first().click();
+        await sleep(1500);
+        await page.click('.review-head button[role=radio]:has-text("Draft")');
       });
-      await say("s13", async () => {
-        await page.click(".actionbar .btn.primary");
-        await page.waitForSelector(".results", { timeout: 60000 });
-      });
-      await say("s14", async () => {
-        await page.locator(".result").first().hover().catch(() => {});
-      });
-      await sleep(600);
+      await say(
+        "s13",
+        () => page.click(".actionbar .btn.primary"),
+        () => cut(() => page.waitForSelector(".results", { timeout: 60000 })),
+      );
+      await say("s14", () => page.locator(".result").first().hover().catch(() => {}));
+      await sleep(700);
     }),
   );
 
   parts.push(await card("outro", ["s15"], 1400));
-  fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify(parts.map(({ name, file, timeline }) => ({ name, file, timeline })), null, 1));
+  fs.writeFileSync(path.join(outDir, "timeline.json"), JSON.stringify(parts.map(({ name, file, timeline, cuts }) => ({ name, file, timeline, cuts })), null, 1));
   console.log(JSON.stringify(parts.map((p) => ({ name: p.name, lines: p.timeline.length })), null, 0));
 })().catch((e) => {
   console.error(e);

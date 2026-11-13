@@ -1,19 +1,89 @@
 {
-  "voiceId": "9mnwGnJighrZDUUITqZY",
-  "segments": [
-    { "id": "s01", "scene": "hook",    "chip": "",                                       "text": "Posting every day means writing the same idea five different ways, then pasting each one into Buffer." },
-    { "id": "s02", "scene": "answer",  "chip": "",                                       "text": "Cascade does that for you. One idea becomes a post made for every channel, sent straight to Buffer." },
-    { "id": "s04", "scene": "app",     "chip": "Sign in with Buffer",                    "text": "I connect my Buffer account, and my channels load straight from Buffer." },
-    { "id": "s05", "scene": "app",     "chip": "One idea",                               "text": "I write the idea once, the way I'd say it." },
-    { "id": "s06", "scene": "app",     "chip": "Photo or video",                         "text": "I add a photo, and Cascade checks that Buffer can fetch it." },
-    { "id": "s07", "scene": "app",     "chip": "Choose channels",                        "text": "Then I choose where it goes." },
-    { "id": "s08", "scene": "app",     "chip": "A post for each network",                "text": "Cascade writes a version for each network." },
-    { "id": "s09", "scene": "app",     "chip": "Buffer's character rules",               "text": "Each post fits its channel, counted the way Buffer counts it, with my X Premium limit read from my account." },
-    { "id": "s10", "scene": "app",     "chip": "Your words only",                        "text": "It keeps my words, my links and my tags, and never adds hashtags or emojis I didn't write." },
-    { "id": "s11", "scene": "app",     "chip": "Edit or rewrite",                        "text": "I can edit anything, or ask for a fresh version." },
-    { "id": "s12", "scene": "app",     "chip": "Queue · Pick a time · Draft",            "text": "For each channel I choose the queue, a time in that channel's time zone, or a draft." },
-    { "id": "s13", "scene": "app",     "chip": "Saved to Buffer Ideas · one post per channel", "text": "One tap saves my original idea to Buffer Ideas, then creates one post for each channel." },
-    { "id": "s14", "scene": "app",     "chip": "Plain answers, safe retries",            "text": "If anything fails, Cascade says why in plain words, and retries only what's missing." },
-    { "id": "s15", "scene": "outro",   "chip": "",                                       "text": "Cascade. One idea, every channel, ready in Buffer. Try it at oncascade dot vercel dot app." }
-  ]
+ "voiceId": "9mnwGnJighrZDUUITqZY",
+ "segments": [
+  {
+   "id": "s01",
+   "scene": "hook",
+   "chip": "",
+   "text": "Every day I post the same idea to my Buffer channels, and every day I rewrite it by hand for each network."
+  },
+  {
+   "id": "s02",
+   "scene": "answer",
+   "chip": "",
+   "text": "So I built Cascade on the Buffer API. One idea becomes a post for each of my Buffer channels."
+  },
+  {
+   "id": "s04",
+   "scene": "app",
+   "chip": "Sign in with Buffer",
+   "text": "I sign in with my Buffer account, and Cascade loads my channels from Buffer."
+  },
+  {
+   "id": "s05",
+   "scene": "app",
+   "chip": "One idea",
+   "text": "I write the idea once."
+  },
+  {
+   "id": "s06",
+   "scene": "app",
+   "chip": "Image for Buffer",
+   "text": "I add an image. I can upload one, or paste a link, and Cascade checks that Buffer can fetch it."
+  },
+  {
+   "id": "s07",
+   "scene": "app",
+   "chip": "My Buffer channels",
+   "text": "I pick which Buffer channels get it."
+  },
+  {
+   "id": "s08",
+   "scene": "app",
+   "chip": "A post for each network",
+   "text": "Cascade writes a version for each network."
+  },
+  {
+   "id": "s09",
+   "scene": "app",
+   "chip": "Buffer's character rules",
+   "text": "Every post is checked against Buffer's own character limits, including my X Premium limit from Buffer."
+  },
+  {
+   "id": "s10",
+   "scene": "app",
+   "chip": "My words only",
+   "text": "It keeps my words, and never adds hashtags or emojis I didn't write."
+  },
+  {
+   "id": "s11",
+   "scene": "app",
+   "chip": "Edit or rewrite",
+   "text": "I can edit any post, or ask for a fresh version."
+  },
+  {
+   "id": "s12",
+   "scene": "app",
+   "chip": "Buffer queue \u00b7 scheduled \u00b7 draft",
+   "text": "For each channel I choose how Buffer handles it: my Buffer queue, a set time, or a Buffer draft."
+  },
+  {
+   "id": "s13",
+   "scene": "app",
+   "chip": "Sent to Buffer",
+   "text": "One tap sends everything to Buffer. My idea is saved in Buffer Ideas, and each channel gets its own Buffer post."
+  },
+  {
+   "id": "s14",
+   "scene": "app",
+   "chip": "Ready in Buffer",
+   "text": "It's all in my Buffer now, ready to go out."
+  },
+  {
+   "id": "s15",
+   "scene": "outro",
+   "chip": "",
+   "text": "Cascade, built on the Buffer API. One idea, every channel, ready in Buffer."
+  }
+ ]
 }
