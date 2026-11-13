@@ -11,3 +11,6 @@ export function checkFile(file: { type: string; size: number }): string | null {
   if (file.size > MAX_UPLOAD_BYTES) return "That video is over 500 MB. Choose a shorter or smaller one.";
   return null;
 }
+
+/** Vercel functions accept request bodies up to 4.5 MB; stay safely under it. */
+export const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { checkFile, IMAGE_TYPES } from "@/lib/upload";
 import type { Media } from "@/lib/types";
 import { api } from "./api";
+import { prepareImage, sendImage } from "./prepareImage";
 
 export interface MediaState {
   status: "idle" | "checking" | "uploading" | "ok" | "error";
@@ -101,23 +102,31 @@ export function useMediaCheck() {
     setState({ status: "uploading", progress: 0, ...base, media: { url: previewUrl ?? "", kind } });
     let lastProgress = Date.now();
     const watchdog = setInterval(() => {
-      if (Date.now() - lastProgress > 15000) setState((s) => (s.status === "uploading" ? { ...s, slow: true } : s));
+      if (kind === "image" && Date.now() - lastProgress > 15000) setState((s) => (s.status === "uploading" ? { ...s, slow: true } : s));
     }, 3000);
     try {
-      const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "") || `media.${kind === "image" ? "jpg" : "mp4"}`;
-      const send = uploadMode === "presigned" ? uploadPresigned : upload;
-      const blob = await send(`${uploadFolder}${safeName}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-        contentType: file.type,
-        multipart: file.size > 8 * 1024 * 1024,
-        abortSignal: controller.signal,
-        onUploadProgress: ({ percentage }) => {
+      let url: string;
+      if (kind === "image") {
+        const ready = await prepareImage(file);
+        url = await sendImage(ready, (pct) => {
           lastProgress = Date.now();
-          setState((s) => (s.status === "uploading" ? { ...s, progress: Math.round(percentage), slow: false } : s));
-        },
-      });
-      setState({ status: "ok", media: { url: blob.url, kind }, ...base });
+          setState((s) => (s.status === "uploading" ? { ...s, progress: pct, slow: false } : s));
+        }, controller.signal);
+      } else {
+        // Videos go straight to storage. No progress callback: that path relies on streaming
+        // uploads, which fail on some mobile networks and browsers.
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "") || "video.mp4";
+        const send = uploadMode === "presigned" ? uploadPresigned : upload;
+        const blob = await send(`${uploadFolder}${safeName}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+          contentType: file.type,
+          multipart: file.size > 50 * 1024 * 1024,
+          abortSignal: controller.signal,
+        });
+        url = blob.url;
+      }
+      setState({ status: "ok", media: { url, kind }, ...base });
     } catch (e) {
       if (controller.signal.aborted) return;
       console.error(e);
@@ -126,7 +135,9 @@ export function useMediaCheck() {
         status: "error",
         message: /connect your Buffer/i.test(msg)
           ? "You've been signed out. Refresh the page and connect again."
-          : "The upload didn't finish. Check your connection and try again.",
+          : /^(The upload|That image|Choose|Uploading isn)/.test(msg)
+            ? msg
+            : "The upload didn't finish. Check your connection and try again.",
       });
     } finally {
       clearInterval(watchdog);

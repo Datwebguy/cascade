@@ -218,10 +218,16 @@ function MediaCard(p: {
           {p.state.status === "uploading" && (
             <div className="upload-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={p.state.progress ?? 0}>
               <div className="row between">
-                <span className="small">Uploading… {p.state.progress ?? 0}%</span>
+                <span className="small">{p.state.media.kind === "video" ? "Uploading video…" : `Uploading… ${p.state.progress ?? 0}%`}</span>
                 {p.state.slow && <span className="hint">Slow connection, still going</span>}
               </div>
-              <div className="progress"><motion.div className="progress-fill" animate={{ width: `${Math.max(3, p.state.progress ?? 0)}%` }} /></div>
+              <div className="progress">
+                {p.state.media.kind === "video" ? (
+                  <motion.div className="progress-fill" style={{ width: "35%" }} animate={{ x: ["-100%", "300%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }} />
+                ) : (
+                  <motion.div className="progress-fill" animate={{ width: `${Math.max(3, p.state.progress ?? 0)}%` }} />
+                )}
+              </div>
             </div>
           )}
           <div className="row between" style={{ marginTop: "0.6rem" }}>
