@@ -1,4 +1,5 @@
-// Minimal local stand-in for auth.buffer.com and api.buffer.com, for development without credentials.
+// DEVELOPMENT/TEST ONLY: a local stand-in for auth.buffer.com and api.buffer.com so the full flow
+// can be exercised without real credentials. The channels below are fixtures, not app data.
 // Run: node scripts/mock-buffer.mjs  (listens on :4010)
 // Then set BUFFER_AUTH_URL=http://localhost:4010 and BUFFER_API_URL=http://localhost:4010/graphql
 import { createServer } from "node:http";
@@ -12,8 +13,11 @@ const channels = [
   { id: "ch_ig", name: "cascade.app", displayName: null, service: "instagram" },
   { id: "ch_fb", name: "Cascade Page", displayName: null, service: "facebook" },
   { id: "ch_th", name: "cascade.threads", displayName: null, service: "threads" },
+  { id: "ch_masto", name: "cascade@fosstodon", displayName: null, service: "mastodon", metadata: { maxCharacters: 1000 } },
+  { id: "ch_pin", name: "Cascade Pins", displayName: null, service: "pinterest", metadata: { boards: [{ serviceId: "b1", name: "Content tips" }, { serviceId: "b2", name: "Behind the scenes" }] } },
   { id: "ch_off", name: "Old account", displayName: null, service: "bluesky", isDisconnected: true },
 ].map((c) => ({
+  metadata: null,
   avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${c.id}`,
   isDisconnected: false,
   isLocked: false,
@@ -44,14 +48,19 @@ createServer(async (req, res) => {
     codes.delete(p.get("code"));
     return json(res, 200, { access_token: "mock_access", refresh_token: "mock_refresh", token_type: "Bearer", expires_in: 3600 });
   }
+  if (url.pathname === "/media/photo.jpg") {
+    res.writeHead(200, { "Content-Type": "image/jpeg" });
+    return res.end();
+  }
   if (url.pathname === "/graphql") {
     if (req.headers.authorization !== "Bearer mock_access") return json(res, 401, {});
     const { query, variables } = JSON.parse(await read(req));
     log.push({ query: query.match(/(query|mutation) (\w+)/)?.[2], variables });
     if (query.includes("account")) return json(res, 200, { data: { account: { organizations: [{ id: "org1", name: "Cascade Org" }] } } });
     if (query.includes("channels(")) return json(res, 200, { data: { channels } });
-    if (query.includes("ideas(")) return json(res, 200, { data: { ideas: { edges: [{ node: { id: "idea_saved", content: { title: "Saved idea", text: "An idea already in Buffer. It has two sentences.", media: [] } } }] } } });
+    if (query.includes("ideas(")) return json(res, 200, { data: { ideas: { edges: [{ node: { id: "idea_saved", content: { title: "Saved idea", text: "An idea already in Buffer. It has two sentences.", media: [] } } }], pageInfo: { hasNextPage: false, endCursor: null } } } });
     if (query.includes("createIdea")) return json(res, 200, { data: { createIdea: { __typename: "Idea", id: "idea_new" } } });
+    if (query.includes("posts(")) return json(res, 200, { data: { posts: { edges: [] } } });
     if (query.includes("createPost")) {
       const i = variables.input;
       if (i.channelId === "ch_fb") return json(res, 200, { data: { createPost: { __typename: "InvalidInputError", message: "Facebook token needs refreshing (mock error)." } } });

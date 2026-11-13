@@ -1,71 +1,101 @@
-import { profileFor } from "./platforms";
-import type { Draft, Media, Service } from "./types";
+import { countFor } from "./count";
+import { limitFor, platformFor, TITLE_LIMIT } from "./platforms";
+import { zonedLocalToUtcIso } from "./schedule";
+import type { Channel, Draft, Media } from "./types";
 
-/** Builds a CreatePostInput for exactly one channel. */
-export function buildPostInput(args: {
-  draft: Draft;
-  service: Service;
-  media: Media | null;
-  ideaId: string | null;
-}) {
-  const { draft, service, media, ideaId } = args;
+/** Builds a CreatePostInput for exactly one channel (one createPost call per channel). */
+export function buildPostInput(args: { draft: Draft; channel: Channel; media: Media | null; ideaId: string | null }) {
+  const { draft, channel, media, ideaId } = args;
   const attach = draft.includeMedia && media ? media : null;
-  const assets = attach
-    ? [attach.kind === "video" ? { video: { url: attach.url } } : { image: { url: attach.url } }]
-    : [];
 
   const input: Record<string, unknown> = {
-    channelId: draft.channelId,
+    channelId: channel.id,
     text: draft.text,
-    assets,
     schedulingType: "automatic",
-    // Buffer has no "draft" ShareMode: drafts are addToQueue + saveToDraft.
+    // Buffer has no "draft" mode: drafts are addToQueue + saveToDraft.
     mode: draft.mode === "saveToDraft" ? "addToQueue" : draft.mode,
-    needsApproval: false,
-    source: "cascade",
   };
+  if (attach) input.assets = [attach.kind === "video" ? { video: { url: attach.url } } : { image: { url: attach.url } }];
   if (draft.mode === "saveToDraft") input.saveToDraft = true;
   if (draft.mode === "customScheduled") {
-    if (!draft.dueAt) throw new Error("A date and time is required for custom scheduling.");
-    input.dueAt = new Date(draft.dueAt).toISOString();
+    if (!draft.dueLocal) throw new Error("A date and time is required for custom scheduling.");
+    input.dueAt = zonedLocalToUtcIso(draft.dueLocal, channel.timezone);
   }
   if (ideaId) input.ideaId = ideaId;
 
-  const metadata = serviceMetadata(service, draft.text, attach);
+  const metadata = serviceMetadata(draft, channel, attach);
   if (metadata) input.metadata = metadata;
   return input;
 }
 
-function serviceMetadata(service: Service, text: string, media: Media | null) {
-  const title = text.split("\n")[0].slice(0, 100);
-  switch (service) {
+function serviceMetadata(draft: Draft, channel: Channel, media: Media | null) {
+  const o = draft.options;
+  switch (channel.service) {
     case "instagram":
-      return { instagram: { type: media?.kind === "video" ? "reel" : "post", shouldShareToFeed: true } };
+      // type and shouldShareToFeed are required by InstagramPostMetadataInput.
+      return {
+        instagram: {
+          type: o.instagramType ?? (media?.kind === "video" ? "reel" : "post"),
+          shouldShareToFeed: true,
+        },
+      };
     case "facebook":
-      return { facebook: { type: "post" } };
+      // type is required by FacebookPostMetadataInput.
+      return { facebook: { type: o.facebookType ?? "post" } };
     case "youtube":
-      return { youtube: { title, privacy: "public" } };
-    case "tiktok":
-      return { tiktok: { title } };
+      return { youtube: { title: draft.title?.trim(), ...(o.youtubePrivacy ? { privacy: o.youtubePrivacy } : {}) } };
+    case "pinterest":
+      return {
+        pinterest: {
+          boardServiceId: o.pinterestBoardId,
+          ...(draft.title?.trim() ? { title: draft.title.trim() } : {}),
+        },
+      };
     case "googlebusiness":
+      // type is required; event/offer need extra details Cascade doesn't collect, so it posts an update.
       return { google: { type: "whats_new" } };
     default:
       return null;
   }
 }
 
-/** Client-side validation so obvious failures never reach Buffer. */
-export function draftWarnings(draft: Draft, service: Service, media: Media | null): string[] {
-  const p = profileFor(service);
-  const out: string[] = [];
-  if (!draft.text.trim()) out.push("Post text is empty.");
-  if (draft.text.length > p.limit) out.push(`${draft.text.length}/${p.limit} characters — over the ${p.label} limit.`);
+export interface DraftCheck {
+  count: number;
+  limit: number;
+  /** Problems that will make Buffer reject the post. */
+  errors: string[];
+}
+
+/** Validates a draft against Buffer's documented rules before sending. */
+export function checkDraft(draft: Draft, channel: Channel, media: Media | null, now = new Date()): DraftCheck {
+  const p = platformFor(channel.service);
   const attached = draft.includeMedia ? media : null;
-  if (p.requiresMedia === "any" && !attached) out.push(`${p.label} requires an image or video.`);
-  if (p.requiresMedia === "video" && attached?.kind !== "video") out.push(`${p.label} requires a video.`);
-  if (draft.mode === "customScheduled") {
-    if (!draft.dueAt) out.push("Pick a date and time.");
-    else if (new Date(draft.dueAt).getTime() < Date.now()) out.push("Scheduled time is in the past.");
+  const limit = limitFor(channel, attached?.kind ?? null);
+  const count = countFor(channel.service, draft.text);
+  const errors: string[] = [];
+
+  if (!draft.text.trim()) errors.push("Post text is empty.");
+  if (count > limit) errors.push(`${count}/${limit} characters: over the ${p.label} limit.`);
+  if (p.requiresMedia === "any" && !attached) errors.push(`${p.label} posts need an image or video.`);
+  if (p.requiresMedia === "video" && attached?.kind !== "video") errors.push(`${p.label} posts need a video.`);
+  if (p.requiresMedia === "image" && attached?.kind !== "image") errors.push(`${p.label} pins need an image.`);
+  if (p.title === "required" && !draft.title?.trim()) errors.push(`${p.label} needs a title.`);
+  if (draft.title && draft.title.length > TITLE_LIMIT) errors.push(`Title is over ${TITLE_LIMIT} characters.`);
+  if (channel.service === "youtube" && /[<>]/.test(draft.text + (draft.title ?? ""))) {
+    errors.push('YouTube text and titles cannot contain "<" or ">".');
   }
-  return out;
+  if (channel.service === "pinterest" && !draft.options.pinterestBoardId) errors.push("Choose a Pinterest board.");
+  if (draft.mode === "customScheduled") {
+    if (!draft.dueLocal) errors.push("Pick a date and time.");
+    else {
+      try {
+        if (new Date(zonedLocalToUtcIso(draft.dueLocal, channel.timezone)).getTime() <= now.getTime()) {
+          errors.push("The scheduled time is in the past.");
+        }
+      } catch {
+        errors.push("Invalid date and time.");
+      }
+    }
+  }
+  return { count, limit, errors };
 }

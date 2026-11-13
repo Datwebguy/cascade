@@ -5,14 +5,27 @@ export const AUTH_URL = `${AUTH_BASE}/auth`;
 export const TOKEN_URL = `${AUTH_BASE}/token`;
 
 // Only what Cascade needs: read channels/account, write ideas and posts, refresh.
+// Narrowest set Cascade needs:
+//  account:read  - organizations and channels
+//  posts:write   - createPost
+//  posts:read    - confirm whether a post landed after a timeout (writes have no idempotency key)
+//  ideas:read    - start from a saved Idea
+//  ideas:write   - createIdea
+//  offline_access - refresh token, so users are not sent back to consent every hour
 export const SCOPES = [
   "account:read",
-  "posts:read",
   "posts:write",
+  "posts:read",
   "ideas:read",
   "ideas:write",
   "offline_access",
 ].join(" ");
+
+export class TokenRefreshError extends Error {
+  constructor(message: string, readonly permanent: boolean) {
+    super(message);
+  }
+}
 
 export interface TokenSet {
   accessToken: string;
@@ -22,15 +35,16 @@ export interface TokenSet {
 }
 
 export function oauthConfig() {
-  const clientId = process.env.BUFFER_CLIENT_ID;
-  const redirectUri = process.env.BUFFER_REDIRECT_URI;
+  const clientId = process.env.BUFFER_CLIENT_ID?.trim();
+  // Buffer compares the redirect URI character for character; trim stray whitespace/newlines.
+  const redirectUri = process.env.BUFFER_REDIRECT_URI?.trim();
   if (!clientId || !redirectUri) {
     throw new Error("BUFFER_CLIENT_ID and BUFFER_REDIRECT_URI must be set.");
   }
   return {
     clientId,
     redirectUri,
-    clientSecret: process.env.BUFFER_CLIENT_SECRET || undefined,
+    clientSecret: process.env.BUFFER_CLIENT_SECRET?.trim() || undefined,
   };
 }
 
@@ -68,8 +82,10 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenSet> {
   });
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok || typeof json.access_token !== "string") {
-    const reason = (json.error_description || json.error || res.statusText) as string;
-    throw new Error(`Buffer token request failed: ${reason}`);
+    const code = String(json.error ?? res.status);
+    console.error("Buffer token request failed", { status: res.status, error: json.error, description: json.error_description });
+    // invalid_grant: code/refresh token expired, used, or revoked -> user must reconnect.
+    throw new TokenRefreshError(`Buffer sign-in failed (${code}).`, code === "invalid_grant" || code === "invalid_client");
   }
   return {
     accessToken: json.access_token,

@@ -4,9 +4,9 @@
   --text: #15171a;
   --muted: #5f6672;
   --border: #e2e5ea;
-  --accent: #2c4bff;
+  --accent: #0f766e;
   --accent-ink: #ffffff;
-  --accent-soft: #eef1ff;
+  --accent-soft: #e6f4f2;
   --ok: #137a3f;
   --ok-soft: #e7f6ed;
   --warn: #8a5a00;
@@ -24,9 +24,9 @@
     --text: #e9ebef;
     --muted: #9aa1ad;
     --border: #2a2f38;
-    --accent: #7086ff;
-    --accent-ink: #0b0d12;
-    --accent-soft: #1d2340;
+    --accent: #2dd4bf;
+    --accent-ink: #06201d;
+    --accent-soft: #10302c;
     --ok: #5fd08d;
     --ok-soft: #12291c;
     --warn: #f0be55;
@@ -142,11 +142,25 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 /* Done */
 .results { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .results li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.6rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap; }
-.results li.ok > span:last-child { color: var(--ok); }
-.results li.fail { border-color: var(--err); }
-.results li.fail > span:last-child { color: var(--err); }
+.results li.created > span:last-child { color: var(--ok); }
+.results li.failed { border-color: var(--err); }
+.results li.failed > span:last-child { color: var(--err); }
+.results li.unknown { border-color: var(--warn); }
+.results li.unknown > span:last-child { color: var(--warn); }
 
 @media (max-width: 600px) {
   .progress { order: 3; width: 100%; justify-content: space-between; }
   .actions .btn { flex: 1 1 auto; }
 }
+
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.inline-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.alert p { margin: 0; }
+.field.compact { margin-bottom: 0; }
+.link.left { align-self: flex-start; }
+.link:disabled { opacity: 0.5; cursor: default; }
+.draft.has-errors { border-color: var(--warn); }
+.footer { text-align: center; margin-top: 2rem; }
+.footer a { color: inherit; }
+.legal { max-width: 44rem; margin: 0 auto; padding: 3rem 16px 4rem; }
+.legal h2 { margin-top: 1.5rem; }

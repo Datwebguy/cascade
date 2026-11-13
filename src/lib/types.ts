@@ -16,6 +16,11 @@ export type Service =
   | "whatsapp"
   | "youtube";
 
+export interface PinterestBoard {
+  serviceId: string;
+  name: string;
+}
+
 export interface Channel {
   id: string;
   name: string;
@@ -26,6 +31,12 @@ export interface Channel {
   isLocked: boolean;
   isQueuePaused: boolean;
   timezone: string;
+  /** From MastodonMetadata.maxCharacters. */
+  mastodonMaxCharacters?: number;
+  /** From TwitterMetadata.subscriptionType. */
+  xSubscriptionType?: string | null;
+  /** From PinterestMetadata.boards. */
+  pinterestBoards?: PinterestBoard[];
 }
 
 export interface Organization {
@@ -50,14 +61,42 @@ export interface Media {
 
 export type SchedulingMode = "addToQueue" | "customScheduled" | "saveToDraft";
 
+export type FeedPostType = "post" | "reel" | "story";
+export type YoutubePrivacy = "public" | "unlisted" | "private";
+
+export interface DraftOptions {
+  instagramType?: FeedPostType;
+  facebookType?: FeedPostType;
+  pinterestBoardId?: string;
+  youtubePrivacy?: YoutubePrivacy;
+}
+
 export interface Draft {
   channelId: string;
   text: string;
-  /** Whether to attach the shared media to this post. */
+  /** YouTube / Pinterest title. */
+  title?: string;
   includeMedia: boolean;
   mode: SchedulingMode;
-  /** ISO string; required when mode is customScheduled. */
-  dueAt?: string;
+  /** customScheduled only: "YYYY-MM-DDTHH:mm" in the channel's timezone. */
+  dueLocal?: string;
+  options: DraftOptions;
+}
+
+export interface AdaptRequest {
+  organizationId: string;
+  idea: string;
+  title?: string;
+  media: Media | null;
+  channelIds: string[];
+}
+
+export interface AdaptedDraft {
+  channelId: string;
+  text: string;
+  title: string | null;
+  /** Set when the AI could not fit the limit even after a retry. */
+  overLimit?: boolean;
 }
 
 export interface PublishRequest {
@@ -67,17 +106,26 @@ export interface PublishRequest {
   drafts: Draft[];
 }
 
+export type PostOutcome = "created" | "failed" | "unknown";
+
 export interface PostResult {
   channelId: string;
-  ok: boolean;
+  outcome: PostOutcome;
   postId?: string;
   status?: string;
   dueAt?: string | null;
-  error?: string;
+  /** User-facing message. */
+  message?: string;
 }
 
 export interface PublishResponse {
   ideaId: string | null;
-  ideaError?: string;
+  ideaMessage?: string;
   posts: PostResult[];
+}
+
+export interface ApiError {
+  error: string;
+  code?: string;
+  retryAfter?: number;
 }

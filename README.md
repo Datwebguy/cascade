@@ -27,58 +27,54 @@ Daily posters already rewrite the same idea for different platforms, attach medi
 
 ## Run it
 
-Requirements: Node.js 20+.
+Requirements: Node.js 22+, a Buffer account, an OpenAI API key.
 
-1. Register an OAuth App Client in Buffer at **Settings → API** (<https://publish.buffer.com/settings/api>).
-   Set the redirect URI to `http://localhost:3000/api/auth/callback` (or your deployed URL + `/api/auth/callback`).
-2. Configure the environment:
-
-   ```bash
-   cp .env.example .env.local
-   # fill in BUFFER_CLIENT_ID (and BUFFER_CLIENT_SECRET for confidential clients)
-   # set SESSION_SECRET, e.g. `openssl rand -base64 32`
-   ```
-
-3. Install and start:
+1. **Register an App Client** in Buffer: Settings → API → App Clients → New Client.
+   - Type: **Private** (Cascade has a server that keeps the secret). PKCE is still used.
+   - Permissions: `account:read`, `posts:read`, `posts:write`, `ideas:read`, `ideas:write`, plus offline access.
+   - Redirect URIs (HTTPS is required, even locally): `https://localhost:3000/api/auth/callback` and your production URL + `/api/auth/callback`.
+2. **Configure**: `cp .env.example .env.local` and fill in the values (see comments in the file).
+3. **Run**:
 
    ```bash
    npm install
-   npm run dev        # http://localhost:3000
+   npm run dev     # https://localhost:3000 (self-signed certificate; accept it in the browser)
    ```
 
 Other scripts: `npm run build`, `npm start`, `npm run typecheck`, `npm test`.
 
-### Try it without Buffer credentials
+### Deploying (Vercel)
 
-`scripts/mock-buffer.mjs` is a small local stand-in for Buffer's auth and GraphQL endpoints (with one channel that always fails, to exercise error handling):
+1. Import the repository into Vercel.
+2. Add a Redis store from the Vercel Marketplace (Upstash). It sets `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+3. Set `BUFFER_CLIENT_ID`, `BUFFER_CLIENT_SECRET`, `BUFFER_REDIRECT_URI`, `SESSION_SECRET` and `OPENAI_API_KEY` in Project → Settings → Environment Variables.
+4. Register `https://<your-domain>/api/auth/callback` on the Buffer App Client.
+5. Smoke test: connect, pick channels, send with **Save as draft**, disconnect, reconnect.
 
-```bash
-node scripts/mock-buffer.mjs &
-BUFFER_CLIENT_ID=test \
-BUFFER_REDIRECT_URI=http://localhost:3000/api/auth/callback \
-SESSION_SECRET=$(openssl rand -base64 32) \
-BUFFER_AUTH_URL=http://localhost:4010 \
-BUFFER_API_URL=http://localhost:4010/graphql \
-npm run dev
-```
+### Local mock (tests only)
+
+`scripts/mock-buffer.mjs` is a fixture server that imitates Buffer's auth and GraphQL endpoints so the flow can be tested without credentials. Point `BUFFER_AUTH_URL` / `BUFFER_API_URL` at it. It is not used by the app in production.
 
 ## How it works
 
 | Piece | Where |
 | --- | --- |
-| OAuth 2.0 Authorization Code + PKCE (S256), state check, token refresh | `src/lib/oauth.ts`, `src/app/api/auth/*` |
-| Tokens kept server-side in an AES-256-GCM encrypted, httpOnly cookie | `src/lib/session.ts`, `src/lib/crypto.ts` |
-| `account → organizations`, `channels`, `ideas` queries | `src/lib/buffer.ts`, `src/app/api/channels`, `src/app/api/ideas` |
-| Rule-based per-platform adaptation (limits, tone, hashtags, CTAs) | `src/lib/adapt.ts`, `src/lib/platforms.ts` |
-| `createIdea`, then one `createPost` per channel with `ideaId`, assets, mode and service metadata | `src/app/api/publish/route.ts`, `src/lib/post-input.ts` |
-| Compose → Review → Done UI | `src/app/compose/Cascade.tsx` |
+| OAuth 2.0 Authorization Code + PKCE (S256), state check | `src/lib/oauth.ts`, `src/app/api/auth/*` |
+| Tokens in a shared Redis store; the browser only holds an encrypted session ID. Refresh is locked so a rotated refresh token is never replayed | `src/lib/session.ts`, `src/lib/store.ts` |
+| Organizations + channels (with Mastodon limit, X subscription, Pinterest boards), cached per session | `src/lib/buffer.ts`, `src/app/api/handler.ts` |
+| Saved Ideas, paginated | `src/app/api/ideas` |
+| AI adaptation (OpenAI, structured output), validated against Buffer's counting rules with one targeted rewrite | `src/lib/ai.ts`, `src/app/api/adapt` |
+| Character counting per network (X weighting, LinkedIn/Mastodon URL weights, Instagram line breaks, Bluesky graphemes) | `src/lib/count.ts`, `src/lib/platforms.ts` |
+| Media URL check: public, direct, HTTPS; type from Content-Type | `src/lib/media.ts` |
+| `createIdea`, then one `createPost` per channel with `ideaId`; success + `MutationError` selected; timeouts verified before any retry | `src/app/api/publish/route.ts`, `src/lib/post-input.ts` |
+| Rate limits: `Retry-After`, `RateLimit` headers, low-quota warning | `src/lib/buffer.ts` |
 
 Notes:
 
-- Every mutation selects both the success type and `... on MutationError { message }`; per-channel failures are shown individually and can be retried without duplicating posts or the idea.
-- Scheduling modes: `addToQueue`, `customScheduled` (with `dueAt`), and drafts (`addToQueue` + `saveToDraft: true`).
-- Media must be a public URL; Buffer fetches it. Instagram, TikTok, YouTube and Pinterest are validated for required media before sending.
+- Scheduling: add to queue, a custom time in the **channel's** timezone, or save as draft (`saveToDraft`).
+- Per-network options: Instagram/Facebook post type, Pinterest board and title, YouTube title and visibility.
 - Metrics are not read: they are personal-key only and unavailable to App Clients.
+- See `docs/RESEARCH_AND_GAPS.md` for the documentation this is built against.
 
 ## Status
 

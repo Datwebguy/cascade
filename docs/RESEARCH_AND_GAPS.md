@@ -150,7 +150,7 @@ Brand rules: may say "Built on the Buffer API" / "Connect your Buffer account". 
 
 ### Decisions (agreed)
 
-- Adaptation: **AI adaptation** via an LLM, constrained by the official per-network limits and counting rules.
+- Adaptation: **AI adaptation** via OpenAI (default model gpt-5.4-mini), constrained by the official per-network limits and counting rules.
 - Hosting: **Vercel**.
 - Token storage: **shared store (Redis/KV)**, which owns token refresh so concurrent refreshes cannot replay a rotated refresh token.
 
