@@ -15,6 +15,19 @@ export interface MediaState {
   /** Local preview while uploading. */
   previewUrl?: string;
   fileName?: string;
+  fileSize?: number;
+  /** Upload is taking a while (no progress for a bit). */
+  slow?: boolean;
+}
+
+/** Reads an image as a data URL: the most reliable preview across mobile browsers. */
+function readAsDataUrl(file: File): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const r = new FileReader();
+    r.onload = () => resolve(typeof r.result === "string" ? r.result : undefined);
+    r.onerror = () => resolve(undefined);
+    r.readAsDataURL(file);
+  });
 }
 
 /** Media for the idea: upload from the device, or paste a public link. */
@@ -83,8 +96,13 @@ export function useMediaCheck() {
     setUrl("");
     latest.current = "";
     const kind = IMAGE_TYPES.includes(file.type) ? "image" : "video";
-    const previewUrl = URL.createObjectURL(file);
-    setState({ status: "uploading", progress: 0, previewUrl, fileName: file.name, media: { url: previewUrl, kind } });
+    const previewUrl = kind === "image" ? await readAsDataUrl(file) : URL.createObjectURL(file);
+    const base = { previewUrl, fileName: file.name, fileSize: file.size };
+    setState({ status: "uploading", progress: 0, ...base, media: { url: previewUrl ?? "", kind } });
+    let lastProgress = Date.now();
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastProgress > 15000) setState((s) => (s.status === "uploading" ? { ...s, slow: true } : s));
+    }, 3000);
     try {
       const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "") || `media.${kind === "image" ? "jpg" : "mp4"}`;
       const send = uploadMode === "presigned" ? uploadPresigned : upload;
@@ -94,13 +112,24 @@ export function useMediaCheck() {
         contentType: file.type,
         multipart: file.size > 8 * 1024 * 1024,
         abortSignal: controller.signal,
-        onUploadProgress: ({ percentage }) => setState((s) => (s.status === "uploading" ? { ...s, progress: Math.round(percentage) } : s)),
+        onUploadProgress: ({ percentage }) => {
+          lastProgress = Date.now();
+          setState((s) => (s.status === "uploading" ? { ...s, progress: Math.round(percentage), slow: false } : s));
+        },
       });
-      setState({ status: "ok", media: { url: blob.url, kind }, previewUrl, fileName: file.name });
+      setState({ status: "ok", media: { url: blob.url, kind }, ...base });
     } catch (e) {
       if (controller.signal.aborted) return;
       console.error(e);
-      setState({ status: "error", message: "The upload didn't finish. Check your connection and try again." });
+      const msg = e instanceof Error ? e.message : "";
+      setState({
+        status: "error",
+        message: /connect your Buffer/i.test(msg)
+          ? "You've been signed out. Refresh the page and connect again."
+          : "The upload didn't finish. Check your connection and try again.",
+      });
+    } finally {
+      clearInterval(watchdog);
     }
   }
 

@@ -212,22 +212,18 @@ function MediaCard(p: {
         <span className="pill">Optional</span>
       </div>
 
-      {has && p.state.media && preview ? (
+      {has && p.state.media ? (
         <div className="media-attached">
-          <div className="media-preview">
-            {p.state.media.kind === "video" ? (
-              <video src={preview} controls muted playsInline preload="metadata" />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview} alt="Your attached image" />
-            )}
-            {p.state.status === "uploading" && (
-              <div className="upload-veil">
-                <span>Uploading… {p.state.progress ?? 0}%</span>
-                <div className="progress"><motion.div className="progress-fill" animate={{ width: `${p.state.progress ?? 0}%` }} /></div>
+          <AttachedPreview kind={p.state.media.kind} src={preview} name={p.state.fileName} size={p.state.fileSize} />
+          {p.state.status === "uploading" && (
+            <div className="upload-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={p.state.progress ?? 0}>
+              <div className="row between">
+                <span className="small">Uploading… {p.state.progress ?? 0}%</span>
+                {p.state.slow && <span className="hint">Slow connection, still going</span>}
               </div>
-            )}
-          </div>
+              <div className="progress"><motion.div className="progress-fill" animate={{ width: `${Math.max(3, p.state.progress ?? 0)}%` }} /></div>
+            </div>
+          )}
           <div className="row between" style={{ marginTop: "0.6rem" }}>
             <span className={`media-status ${p.state.status === "ok" ? "ok" : ""}`} style={{ marginTop: 0 }}>
               {p.state.status === "ok" ? (
@@ -306,5 +302,36 @@ function MediaCard(p: {
         )}
       </AnimatePresence>
     </section>
+  );
+}
+
+function formatSize(bytes?: number) {
+  if (!bytes) return "";
+  return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
+}
+
+/** Preview of the attached file, with a clean file card if the browser can't show it. */
+function AttachedPreview({ kind, src, name, size }: { kind: "image" | "video"; src?: string; name?: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <div className="file-tile">
+        <span className="dropzone-icon"><Icon name="image" size={22} /></span>
+        <span className="who">
+          <strong>{name ?? (kind === "video" ? "Your video" : "Your image")}</strong>
+          <span>{[kind === "video" ? "Video" : "Image", formatSize(size)].filter(Boolean).join(" · ")}</span>
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="media-preview">
+      {kind === "video" ? (
+        <video src={src} controls muted playsInline preload="metadata" onError={() => setFailed(true)} />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" onError={() => setFailed(true)} />
+      )}
+    </div>
   );
 }
