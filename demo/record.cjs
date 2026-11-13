@@ -113,8 +113,8 @@ async function card(name, ids, holdAfter = 800) {
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const parts = [];
-  parts.push(await card("hook", ["s01"], 600));
-  parts.push(await card("answer", ["s02"], 500));
+  parts.push(await card("hook", ["s01", "s02"], 500));
+  parts.push(await card("answer", ["s03", "s03b"], 500));
 
   parts.push(
     await record("app", { width: W, height: H }, async (page, say, cut) => {

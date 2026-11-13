@@ -5,85 +5,97 @@
    "id": "s01",
    "scene": "hook",
    "chip": "",
-   "text": "Every day I post the same idea to my Buffer channels, and every day I rewrite it by hand for each network."
+   "text": "If you post on more than one network, you know the problem. X wants it short. LinkedIn wants the story. Instagram wants a caption."
   },
   {
    "id": "s02",
+   "scene": "hook",
+   "chip": "",
+   "text": "So most people either paste the same text everywhere, or rewrite it by hand, every single day."
+  },
+  {
+   "id": "s03",
    "scene": "answer",
    "chip": "",
-   "text": "So I built Cascade on the Buffer API. One idea becomes a post for each of my Buffer channels."
+   "text": "Cascade is for people who post daily across several networks with Buffer. You write an idea once, Cascade turns it into a post made for each network, and puts them all in Buffer."
+  },
+  {
+   "id": "s03b",
+   "scene": "answer",
+   "chip": "",
+   "text": "We built it because Buffer already solved the posting. The rewriting was still on you."
   },
   {
    "id": "s04",
    "scene": "app",
    "chip": "Sign in with Buffer",
-   "text": "I sign in with my Buffer account, and Cascade loads my channels from Buffer."
+   "text": "Here's my day. I post on X and LinkedIn through Buffer. I sign in with Buffer, and my channels are already there."
   },
   {
    "id": "s05",
    "scene": "app",
-   "chip": "One idea",
-   "text": "I write the idea once."
+   "chip": "Write it once",
+   "text": "We just shipped something, so I write it once, in my own words."
   },
   {
    "id": "s06",
    "scene": "app",
-   "chip": "Image for Buffer",
-   "text": "I add an image. I can upload one, or paste a link, and Cascade checks that Buffer can fetch it."
+   "chip": "Add an image",
+   "text": "I add a screenshot. I can upload it, or paste a link."
   },
   {
    "id": "s07",
    "scene": "app",
    "chip": "My Buffer channels",
-   "text": "I pick which Buffer channels get it."
+   "text": "I pick X and LinkedIn."
   },
   {
    "id": "s08",
    "scene": "app",
    "chip": "A post for each network",
-   "text": "Cascade writes a version for each network."
+   "text": "Cascade writes a version for each."
   },
   {
    "id": "s09",
    "scene": "app",
-   "chip": "Buffer's character rules",
-   "text": "Every post is checked against Buffer's own character limits, including my X Premium limit from Buffer."
+   "chip": "Made for each network",
+   "text": "X gets a short, punchy post. LinkedIn gets the story behind it. Both fit Buffer's limits."
   },
   {
    "id": "s10",
    "scene": "app",
    "chip": "My words only",
-   "text": "It keeps my words, and never adds hashtags or emojis I didn't write."
+   "text": "My words only. No hashtags or emojis I didn't write."
   },
   {
    "id": "s11",
    "scene": "app",
    "chip": "Edit or rewrite",
-   "text": "I can edit any post, or ask for a fresh version."
+   "text": "I can tweak anything, or get a fresh version."
   },
   {
    "id": "s12",
    "scene": "app",
-   "chip": "Buffer queue \u00b7 scheduled \u00b7 draft",
-   "text": "For each channel I choose how Buffer handles it: my Buffer queue, a set time, or a Buffer draft."
+   "chip": "Queue \u00b7 set time \u00b7 draft",
+   "text": "For each network I choose: my Buffer queue, a set time, or a draft. For this demo, both go in as drafts."
   },
   {
    "id": "s13",
    "scene": "app",
    "chip": "Sent to Buffer",
-   "text": "One tap sends everything to Buffer. My idea is saved in Buffer Ideas, and each channel gets its own Buffer post."
+   "text": "One tap, and it's all in Buffer. My idea is saved in Buffer Ideas, and each network gets its own post."
   },
   {
    "id": "s14",
    "scene": "app",
    "chip": "Ready in Buffer",
-   "text": "It's all in my Buffer now, ready to go out."
+   "text": "Two networks, two audiences, about a minute of work."
   },
   {
    "id": "s15",
    "scene": "outro",
    "chip": "",
-   "text": "Cascade, built on the Buffer API. One idea, every channel, ready in Buffer."
+   "text": "Cascade. Write once, fit every network, ready in Buffer."
   }
  ]
 }

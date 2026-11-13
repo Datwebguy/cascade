@@ -31,25 +31,25 @@
 <body><div class="stage"><div class="wash"></div><div id="c" style="position:relative"></div></div>
 <script>
 const LOGO = (size) => `<svg class="mark" width="${size}" height="${size}" viewBox="0 0 64 64"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B1E3C"/><stop offset="1" stop-color="#0B0D1E"/></linearGradient><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B7CFF"/><stop offset="1" stop-color="#3EE6D8"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#b)"/><g fill="none" stroke="url(#s)" stroke-width="4.5" stroke-linecap="round"><path d="M32 18 C32 30 17 29 17 43"/><path d="M32 18 V43"/><path d="M32 18 C32 30 47 29 47 43"/></g><circle class="dot" style="animation-delay:.1s" cx="32" cy="14" r="5.5" fill="#8B7CFF"/><circle class="dot" style="animation-delay:1.1s" cx="17" cy="49" r="4.5" fill="#3EE6D8"/><circle class="dot" style="animation-delay:1.2s" cx="32" cy="49" r="4.5" fill="#3EE6D8"/><circle class="dot" style="animation-delay:1.3s" cx="47" cy="49" r="4.5" fill="#3EE6D8"/></svg>`;
-const NETS = ["X", "LinkedIn", "Instagram", "Threads"];
+const NETS = [["X", "Wants it short"], ["LinkedIn", "Wants the story"], ["Instagram", "Wants a caption"], ["Threads", "Wants it casual"]];
 const card = new URLSearchParams(location.search).get("card");
 const c = document.getElementById("c");
 if (card === "hook") {
   const xs = [125, 397, 669, 941];
   c.innerHTML = `<div>
-    <h1 class="in" style="font-size:60px;margin-bottom:44px">Same idea. <span class="grad">Rewritten again and again.</span></h1>
+    <h1 class="in" style="font-size:60px;margin-bottom:44px">One idea. <span class="grad">Every network wants it different.</span></h1>
     <div class="idea in" style="animation-delay:.6s"><small>Today's idea</small>Consistency beats polish.</div>
     <svg class="streams" width="1066" height="90" viewBox="0 0 1066 90">
       <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B7CFF"/><stop offset="1" stop-color="#3EE6D8"/></linearGradient></defs>
       ${xs.map((x,i)=>`<path stroke="url(#g)" style="animation-delay:${1.2+i*0.15}s" d="M533 0 C533 45 ${x} 40 ${x} 90"/>`).join("")}
     </svg>
-    <div class="tiles">${NETS.map((n,i)=>`<div class="tile in" style="animation-delay:${1.8+i*0.25}s"><b>${n}</b><span class="busy">Rewriting by hand…</span><div class="bar w1"></div><div class="bar w${(i%3)+1}"></div></div>`).join("")}</div>
-    <div class="caption in" style="animation-delay:3.2s">…then pasted into Buffer, one channel at a time.</div>
+    <div class="tiles">${NETS.map((n,i)=>`<div class="tile in" style="animation-delay:${1.8+i*0.25}s"><b>${n[0]}</b><span class="busy">${n[1]}</span><div class="bar w1"></div><div class="bar w${(i%3)+1}"></div></div>`).join("")}</div>
+    <div class="caption in" style="animation-delay:5.5s">…so you rewrite it by hand, every day.</div>
   </div>`;
 } else if (card === "answer" || card === "outro") {
   c.innerHTML = `<div>${LOGO(140)}<div class="word in" style="animation-delay:.5s;margin-top:14px">cascade</div>
     <h1 class="in" style="font-size:72px;margin-top:22px;animation-delay:1s">One idea. <span class="grad">Every channel.</span></h1>
-    <div class="sub in" style="animation-delay:1.5s">${card === "outro" ? "oncascade.vercel.app" : "Ready in Buffer."}</div>
+    <div class="sub in" style="animation-delay:1.5s">${card === "outro" ? "oncascade.vercel.app" : "For people who post daily across networks with Buffer."}</div>
     ${card === "outro" ? '<div class="in" style="animation-delay:2s;margin-top:34px;color:#5e6280;font-size:20px">Built on the Buffer API for Buffer Commit 2026 · Not affiliated with Buffer</div>' : ""}</div>`;
 }
 </script></body></html>
