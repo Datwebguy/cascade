@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
     const result = await handleUploadPresigned({
       body: body as HandleUploadPresignedBody,
       request: req,
+      // Only used to verify upload-completed callbacks, which Cascade doesn't register.
+      webhookPublicKey: process.env.BLOB_WEBHOOK_PUBLIC_KEY || "not-used",
       getSignedToken: async (pathname) => {
         await authorize(pathname);
         const l = limits();
@@ -66,7 +68,9 @@ export async function POST(req: NextRequest) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("Upload authorization error", msg);
     if (msg === "not-signed-in") return NextResponse.json({ error: "Please connect your Buffer account first." }, { status: 401 });
-    return NextResponse.json({ error: "That upload couldn't start. Please try again." }, { status: 400 });
+    // A short, non-secret reason helps diagnose setup problems without exposing details.
+    const reason = /oidc|credential/i.test(msg) ? "auth" : /store/i.test(msg) ? "store" : msg === "bad-path" ? "path" : "other";
+    return NextResponse.json({ error: "That upload couldn't start. Please try again.", reason }, { status: 400 });
   }
 }
 
