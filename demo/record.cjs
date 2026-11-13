@@ -24,20 +24,23 @@ const OVERLAY = `
     if (!root) {
       root = document.createElement("div");
       root.id = "__ov";
-      root.innerHTML = '<div id="__chip"></div><div id="__cap"></div>';
+      root.innerHTML = '<div id="__chip"><i></i><span></span></div><div id="__cap"></div>';
       const st = document.createElement("style");
       st.textContent = \`
         #__ov{position:fixed;inset:0;pointer-events:none;z-index:2147483647;font-family:Inter,system-ui,sans-serif}
-        #__chip{position:absolute;top:22px;left:22px;background:rgba(11,12,26,.88);color:#fff;padding:9px 16px;border-radius:10px;font-size:18px;font-weight:600;opacity:0;transition:opacity .3s}
-        #__chip:before{content:"— ";color:#3ee6d8}
-        #__cap{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);max-width:74%;background:rgba(11,12,26,.88);color:#fff;padding:12px 22px;border-radius:12px;font-size:24px;line-height:1.35;text-align:center;opacity:0;transition:opacity .25s}
+        #__chip{position:absolute;top:18px;right:22px;display:flex;align-items:center;gap:10px;background:#fff;color:#12132a;padding:9px 16px 9px 12px;border-radius:999px;font-size:17px;font-weight:600;border:1px solid #e4e3f0;box-shadow:0 10px 30px -12px rgba(40,30,120,.35);opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s}
+        #__chip.on{opacity:1;transform:none}
+        #__chip i{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#8b7cff,#3ee6d8);flex:none}
+        #__cap{position:absolute;left:28px;bottom:28px;max-width:62%;background:#fff;color:#12132a;padding:14px 20px 14px 22px;border-radius:16px;font-size:23px;line-height:1.4;font-weight:500;border:1px solid #e4e3f0;box-shadow:0 18px 40px -16px rgba(40,30,120,.35);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+        #__cap.on{opacity:1;transform:none}
+        #__cap:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:4px;background:linear-gradient(#8b7cff,#3ee6d8)}
       \`;
       document.documentElement.appendChild(st);
       document.documentElement.appendChild(root);
     }
     const c = document.getElementById("__chip"), p = document.getElementById("__cap");
-    c.textContent = chip || ""; c.style.opacity = chip ? 1 : 0;
-    p.textContent = caption || ""; p.style.opacity = caption ? 1 : 0;
+    c.querySelector("span").textContent = chip || ""; c.classList.toggle("on", !!chip);
+    p.textContent = caption || ""; p.classList.toggle("on", !!caption);
   };
   if (window.__lastOv) window.addEventListener("DOMContentLoaded", () => window.__ov(...window.__lastOv));
 `;
@@ -96,8 +99,8 @@ async function card(name, ids, holdAfter = 800) {
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const parts = [];
-  parts.push(await card("intro", ["s01"]));
-  parts.push(await card("problem", ["s02", "s03"], 400));
+  parts.push(await card("hook", ["s01"], 600));
+  parts.push(await card("answer", ["s02"], 500));
 
   parts.push(
     await record("app", { width: W, height: H }, async (page, say) => {

@@ -11,13 +11,18 @@ spec, out, voice = sys.argv[1], sys.argv[2], sys.argv[3]
 segs = json.load(open(spec))["segments"]
 durations = {}
 for s in segs:
-    path = f"{out}/{s['id']}.mp3"
+    raw = f"{out}/{s['id']}.raw.mp3"
+    path = f"{out}/{s['id']}.wav"
     body = json.dumps({"text": s["text"], "model_id": "eleven_multilingual_v2",
-                       "voice_settings": {"stability": 0.5, "similarity_boost": 0.85, "style": 0.15, "use_speaker_boost": True}})
+                       "voice_settings": {"stability": 0.55, "similarity_boost": 0.72, "style": 0.0, "use_speaker_boost": False}})
     subprocess.run(["curl", "-s", "-f", "-X", "POST",
                     f"https://api.elevenlabs.io/v1/text-to-speech/{voice}?output_format=mp3_44100_128",
                     "-H", "xi-api-key: proxy-injected", "-H", "Content-Type: application/json",
-                    "-d", body, "-o", path], check=True)
+                    "-d", body, "-o", raw], check=True)
+    # Even loudness with headroom: no clipping or crackle after encoding.
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-af",
+                    "highpass=f=70,loudnorm=I=-16:TP=-3:LRA=7,aresample=48000",
+                    "-ac", "2", "-c:a", "pcm_s16le", path], check=True)
     d = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path]).strip())
     durations[s["id"]] = d
     print(f"{s['id']} {d:5.2f}s  {s['text'][:60]}")

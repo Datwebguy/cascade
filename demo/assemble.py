@@ -19,7 +19,7 @@ for p in parts:
     filters = [f"[0:v]scale=1920:1080:flags=lanczos,fps=30,format=yuv420p,fade=t=in:st=0:d=0.35,fade=t=out:st={max(d-0.4,0):.2f}:d=0.4[v]"]
     mix = []
     for i, line in enumerate(p["timeline"], start=1):
-        inputs += ["-i", os.path.join(tts, f"{line['id']}.mp3")]
+        inputs += ["-i", os.path.join(tts, f"{line['id']}.wav")]
         ms = int(line["t"] * 1000)
         filters.append(f"[{i}:a]aresample=48000,aformat=channel_layouts=stereo,adelay={ms}|{ms}[a{i}]")
         mix.append(f"[a{i}]")
@@ -27,13 +27,13 @@ for p in parts:
     filters.append(f"[sil]{''.join(mix)}amix=inputs={len(mix)+1}:normalize=0:duration=first[a]")
     subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(filters),
                     "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-                    "-c:a", "aac", "-b:a", "192k", "-t", f"{d:.3f}", dst], check=True)
+                    "-c:a", "aac", "-b:a", "256k", "-t", f"{d:.3f}", dst], check=True)
     built.append(dst)
     print(f"{p['name']:8s} {d:6.2f}s  {len(p['timeline'])} lines")
 
 lst = os.path.join(rec, "concat.txt")
 open(lst, "w").write("".join(f"file '{b}'\n" for b in built))
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst,
-                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "aac", "-b:a", "192k",
+                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "aac", "-b:a", "256k",
                 "-movflags", "+faststart", out], check=True)
 print("output", out, round(duration(out), 1), "s")
