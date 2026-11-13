@@ -2,7 +2,7 @@
 
 **Write one idea. Get a post made for every network. Ready in Buffer.**
 
-Live: **https://oncascade.vercel.app** · Built on the Buffer API for Buffer Commit 2026
+Live: **https://oncascade.vercel.app** · ▶ **[Watch the demo (1:19)](https://youtu.be/8lEK_hZaYQM)** · Built on the Buffer API for Buffer Commit 2026
 
 ![Cascade turns one idea into a LinkedIn post and an X post, side by side](docs/screenshots/review.webp)
 

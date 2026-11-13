@@ -6,8 +6,8 @@ Deadline: **13 November 2026, 11:59pm Pacific**. Submissions are final once sent
 
 - [ ] Live app works end to end with a real Buffer account (connect, adapt, send as draft, verify in Buffer)
 - [ ] Client ID: `lk8NsttOqb37qhBjV_IsU1fpVSunrzeiFPXurCngZJ0` (never the secret)
-- [ ] Public URL: https://oncascade.vercel.app (must stay up through judging; judging starts 16 Nov, winners 7 Dec)
-- [ ] Two-minute demo video, public link (YouTube / Loom / Drive)
+- [x] Public URL: https://oncascade.vercel.app (must stay up through judging; judging starts 16 Nov, winners 7 Dec)
+- [x] Demo video, public link: https://youtu.be/8lEK_hZaYQM
 - [ ] 300-word summary (below)
 - [ ] Team details and contact information
 - [ ] Optional: build-in-public posts that mention Buffer Commit
