@@ -25,6 +25,61 @@ Daily posters already rewrite the same idea for different platforms, attach medi
 - `createIdea`
 - `createPost` (with assets, scheduling mode, and optional service metadata)
 
+## Run it
+
+Requirements: Node.js 20+.
+
+1. Register an OAuth App Client in Buffer at **Settings → API** (<https://publish.buffer.com/settings/api>).
+   Set the redirect URI to `http://localhost:3000/api/auth/callback` (or your deployed URL + `/api/auth/callback`).
+2. Configure the environment:
+
+   ```bash
+   cp .env.example .env.local
+   # fill in BUFFER_CLIENT_ID (and BUFFER_CLIENT_SECRET for confidential clients)
+   # set SESSION_SECRET, e.g. `openssl rand -base64 32`
+   ```
+
+3. Install and start:
+
+   ```bash
+   npm install
+   npm run dev        # http://localhost:3000
+   ```
+
+Other scripts: `npm run build`, `npm start`, `npm run typecheck`, `npm test`.
+
+### Try it without Buffer credentials
+
+`scripts/mock-buffer.mjs` is a small local stand-in for Buffer's auth and GraphQL endpoints (with one channel that always fails, to exercise error handling):
+
+```bash
+node scripts/mock-buffer.mjs &
+BUFFER_CLIENT_ID=test \
+BUFFER_REDIRECT_URI=http://localhost:3000/api/auth/callback \
+SESSION_SECRET=$(openssl rand -base64 32) \
+BUFFER_AUTH_URL=http://localhost:4010 \
+BUFFER_API_URL=http://localhost:4010/graphql \
+npm run dev
+```
+
+## How it works
+
+| Piece | Where |
+| --- | --- |
+| OAuth 2.0 Authorization Code + PKCE (S256), state check, token refresh | `src/lib/oauth.ts`, `src/app/api/auth/*` |
+| Tokens kept server-side in an AES-256-GCM encrypted, httpOnly cookie | `src/lib/session.ts`, `src/lib/crypto.ts` |
+| `account → organizations`, `channels`, `ideas` queries | `src/lib/buffer.ts`, `src/app/api/channels`, `src/app/api/ideas` |
+| Rule-based per-platform adaptation (limits, tone, hashtags, CTAs) | `src/lib/adapt.ts`, `src/lib/platforms.ts` |
+| `createIdea`, then one `createPost` per channel with `ideaId`, assets, mode and service metadata | `src/app/api/publish/route.ts`, `src/lib/post-input.ts` |
+| Compose → Review → Done UI | `src/app/compose/Cascade.tsx` |
+
+Notes:
+
+- Every mutation selects both the success type and `... on MutationError { message }`; per-channel failures are shown individually and can be retried without duplicating posts or the idea.
+- Scheduling modes: `addToQueue`, `customScheduled` (with `dueAt`), and drafts (`addToQueue` + `saveToDraft: true`).
+- Media must be a public URL; Buffer fetches it. Instagram, TikTok, YouTube and Pinterest are validated for required media before sending.
+- Metrics are not read: they are personal-key only and unavailable to App Clients.
+
 ## Status
 
 Built for Buffer Commit 2026.
