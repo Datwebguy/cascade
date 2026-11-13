@@ -148,6 +148,14 @@ Brand rules: may say "Built on the Buffer API" / "Connect your Buffer account". 
 4. **App Client.** Who registers it (private client), and with which redirect URIs?
 5. **Token storage.** Encrypted cookie (simple, acceptable per docs) or a shared store such as Vercel KV/Upstash Redis (handles concurrent refresh properly)?
 
+### Decisions (agreed)
+
+- Adaptation: **AI adaptation** via an LLM, constrained by the official per-network limits and counting rules.
+- Hosting: **Vercel**.
+- Token storage: **shared store (Redis/KV)**, which owns token refresh so concurrent refreshes cannot replay a rotated refresh token.
+
+Still open: question 2 (what is missing from the idea), the production domain, and who registers the App Client.
+
 ## 6. Proposed plan (step by step, each step reviewed before the next)
 
 1. Agree answers to section 5.
