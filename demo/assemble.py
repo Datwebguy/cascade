@@ -32,7 +32,7 @@ for p in parts:
     inputs = ["-i", src]
     vparts = [f"[0:v]trim=start={a:.3f}:end={b:.3f},setpts=PTS-STARTPTS[v{i}]" for i, (a, b) in enumerate(spans)]
     filters = vparts + [f"{''.join(f'[v{i}]' for i in range(len(spans)))}concat=n={len(spans)}:v=1:a=0[vc]",
-               f"[vc]scale=1920:1080:flags=lanczos,fps=30,format=yuv420p,fade=t=in:st=0:d=0.35:color=0xF6F5FB,fade=t=out:st={max(d-0.4,0):.2f}:d=0.4:color=0xF6F5FB[v]"]
+               f"[vc]scale=1920:1080:flags=lanczos,fps=30,format=yuv420p,fade=t=in:st=0:d=0.35:color=0xF6F5FB,fade=t=out:st={max(d-0.4,0):.2f}:d=0.4:color=0xF6F5FB,format=yuv420p[v]"]
     mix = []
     for i, line in enumerate(p["timeline"], start=1):
         inputs += ["-i", os.path.join(tts, f"{line['id']}.wav")]
@@ -43,6 +43,7 @@ for p in parts:
     filters.append(f"[sil]{''.join(mix)}amix=inputs={len(mix)+1}:normalize=0:duration=first[a]")
     subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(filters),
                     "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+                    "-pix_fmt", "yuv420p", "-profile:v", "high", "-level:v", "4.1",
                     "-c:a", "aac", "-b:a", "256k", "-t", f"{d:.3f}", dst], check=True)
     built.append(dst)
     print(f"{p['name']:8s} {total:6.2f}s -> {d:6.2f}s  ({len(cuts)} waits cut, {len(p['timeline'])} lines)")
@@ -50,6 +51,7 @@ for p in parts:
 lst = os.path.join(rec, "concat.txt")
 open(lst, "w").write("".join(f"file '{b}'\n" for b in built))
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", lst,
-                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-c:a", "aac", "-b:a", "256k",
+                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-profile:v", "high", "-level:v", "4.1", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
                 "-movflags", "+faststart", out], check=True)
 print("output", out, round(duration(out), 1), "s")
