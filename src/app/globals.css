@@ -305,3 +305,13 @@ textarea { resize: vertical; line-height: 1.55; }
 .file-tile .dropzone-icon { margin: 0; flex: none; }
 .media-preview { min-height: 6rem; }
 .post .media-preview img, .post .media-preview video { object-fit: contain; max-height: 14rem; }
+
+.result .status { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; }
+.result .status-main { font-weight: 600; }
+.result .status-next { color: var(--muted); font-size: 0.8rem; }
+.result .status-link { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 600; color: var(--primary); text-decoration: none; margin-top: 0.15rem; }
+.what-next { max-width: 40rem; margin: 1rem auto 0; }
+.what-next h2 { font-size: 1.05rem; margin-bottom: 0.5rem; }
+.what-next ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; color: var(--muted); }
+.what-next strong { color: var(--ink); }
+@media (max-width: 560px) { .result { flex-wrap: wrap; } .result .status { align-items: flex-start; max-width: 100%; margin-left: 0; } }

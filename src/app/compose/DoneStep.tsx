@@ -1,20 +1,35 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { Channel, PostResult, PublishResponse } from "@/lib/types";
+import type { Channel, PostResult, PublishResponse, SchedulingMode } from "@/lib/types";
 import { ChannelIdentity, Icon } from "./ui";
 
-function describe(p: PostResult): string {
-  if (p.outcome !== "created") return p.message ?? "Not sent.";
-  if (p.status === "draft") return "Saved as draft";
-  const when = p.dueAt ? new Date(p.dueAt).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
-  return when ? `Scheduled · ${when}` : "Added to your queue";
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+/** What happened to this post, and what happens next in Buffer. */
+function describe(p: PostResult, mode: SchedulingMode | undefined): { status: string; next?: string } {
+  if (p.outcome !== "created") return { status: p.message ?? "Not sent." };
+  if (p.status === "draft" || mode === "saveToDraft") {
+    return { status: "Saved as a draft in Buffer", next: "Nothing is published until you schedule or publish it in Buffer." };
+  }
+  const when = p.dueAt ? fmt(p.dueAt) : null;
+  if (mode === "customScheduled") {
+    return { status: when ? `Scheduled for ${when}` : "Scheduled", next: "Buffer publishes it automatically at that time." };
+  }
+  return {
+    status: when ? `In your Buffer queue · ${when}` : "In your Buffer queue",
+    next: "Buffer publishes it automatically at that slot.",
+  };
 }
 
+const bufferChannelUrl = (channelId: string) => `https://publish.buffer.com/channels/${encodeURIComponent(channelId)}`;
+
 export function DoneStep({
-  result, channelById, sending, onRetry, onEdit, onNew,
+  result, modes, channelById, sending, onRetry, onEdit, onNew,
 }: {
   result: PublishResponse;
+  modes: Map<string, SchedulingMode>;
   channelById: Map<string, Channel>;
   sending: boolean;
   onRetry: () => void;
@@ -45,6 +60,7 @@ export function DoneStep({
       <ul className="results">
         {result.posts.map((p, i) => {
           const ch = channelById.get(p.channelId);
+          const d = describe(p, modes.get(p.channelId));
           return (
             <motion.li
               key={p.channelId}
@@ -55,11 +71,21 @@ export function DoneStep({
               transition={{ delay: 0.3 + i * 0.08 }}
             >
               {ch && <ChannelIdentity channel={ch} />}
-              <span className="status">{describe(p)}</span>
+              <span className="status">
+                <span className="status-main">{d.status}</span>
+                {d.next && <span className="status-next">{d.next}</span>}
+                {p.outcome === "created" && (
+                  <a className="status-link" href={bufferChannelUrl(p.channelId)} target="_blank" rel="noreferrer">
+                    View in Buffer <Icon name="external" size={13} />
+                  </a>
+                )}
+              </span>
             </motion.li>
           );
         })}
       </ul>
+
+      {created > 0 && <WhatNext result={result} modes={modes} />}
 
       {unsure > 0 && (
         <p className="notice warn" style={{ maxWidth: "40rem", margin: "1rem auto 0" }}>
@@ -86,5 +112,33 @@ export function DoneStep({
         </button>
       </div>
     </>
+  );
+}
+
+/** Plain summary of what Buffer will do with everything that was sent. */
+function WhatNext({ result, modes }: { result: PublishResponse; modes: Map<string, SchedulingMode> }) {
+  const sent = result.posts.filter((p) => p.outcome === "created");
+  const drafts = sent.filter((p) => p.status === "draft" || modes.get(p.channelId) === "saveToDraft").length;
+  const automatic = sent.length - drafts;
+  return (
+    <div className="card what-next">
+      <h2>What happens next</h2>
+      <ul>
+        {automatic > 0 && (
+          <li>
+            <strong>{automatic === 1 ? "1 post publishes" : `${automatic} posts publish`} automatically.</strong> Buffer sends{" "}
+            {automatic === 1 ? "it" : "them"} at the time shown, even if you close Cascade.
+          </li>
+        )}
+        {drafts > 0 && (
+          <li>
+            <strong>{drafts === 1 ? "1 draft is" : `${drafts} drafts are`} waiting in Buffer.</strong> Open Buffer to give{" "}
+            {drafts === 1 ? "it" : "them"} a final look, then schedule or publish.
+          </li>
+        )}
+        <li>You can still edit, reschedule or delete any post in Buffer.</li>
+        {result.ideaId && <li>Your original idea is saved in Buffer Ideas, ready to reuse.</li>}
+      </ul>
+    </div>
   );
 }

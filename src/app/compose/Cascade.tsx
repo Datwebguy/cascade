@@ -337,6 +337,7 @@ export default function Cascade() {
             <motion.div key="done" {...pageMotion}>
               <DoneStep
                 result={result}
+                modes={new Map(drafts.map((d) => [d.channelId, d.mode]))}
                 channelById={channelById}
                 sending={sending}
                 onRetry={() => {

@@ -13,9 +13,9 @@ const MODES: { id: SchedulingMode; label: string; icon: "queue" | "clock" | "dra
 ];
 
 const MODE_HINT: Record<SchedulingMode, string> = {
-  addToQueue: "Goes out at the next open time in this channel's Buffer schedule.",
+  addToQueue: "Buffer publishes it automatically at the next open slot in this channel's schedule.",
   customScheduled: "",
-  saveToDraft: "Saved as a draft in Buffer. Nothing is published.",
+  saveToDraft: "Saved in Buffer's Drafts. Nothing is published until you schedule it in Buffer.",
 };
 
 export interface ReviewProps {
@@ -184,7 +184,7 @@ function PostCard(props: ReviewProps & { draft: Draft; channel: Channel; check: 
         {d.mode === "customScheduled" ? (
           <div className="field">
             <input type="datetime-local" aria-label="Date and time" value={d.dueLocal ?? ""} onChange={(e) => onUpdate(d.channelId, { dueLocal: e.target.value })} />
-            <span className="hint">In this channel&apos;s time zone ({ch.timezone.replace(/_/g, " ")}).</span>
+            <span className="hint">Buffer publishes it automatically at this time, in the channel&apos;s time zone ({ch.timezone.replace(/_/g, " ")}).</span>
           </div>
         ) : (
           <span className="hint">{MODE_HINT[d.mode]}</span>
