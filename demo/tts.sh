@@ -21,7 +21,9 @@ for s in segs:
                     "-d", body, "-o", raw], check=True)
     # Even loudness with headroom: no clipping or crackle after encoding.
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-af",
-                    "highpass=f=70,loudnorm=I=-16:TP=-3:LRA=7,aresample=48000",
+                    "highpass=f=70,loudnorm=I=-16:TP=-3:LRA=7,aresample=48000,"
+                    "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.04,areverse,"
+                    "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse",
                     "-ac", "2", "-c:a", "pcm_s16le", path], check=True)
     d = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path]).strip())
     durations[s["id"]] = d

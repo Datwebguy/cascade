@@ -44,12 +44,26 @@ if (card === "hook") {
       ${xs.map((x,i)=>`<path stroke="url(#g)" style="animation-delay:${1.2+i*0.15}s" d="M533 0 C533 45 ${x} 40 ${x} 90"/>`).join("")}
     </svg>
     <div class="tiles">${NETS.map((n,i)=>`<div class="tile in" style="animation-delay:${1.8+i*0.25}s"><b>${n[0]}</b><span class="busy">${n[1]}</span><div class="bar w1"></div><div class="bar w${(i%3)+1}"></div></div>`).join("")}</div>
-    <div class="caption in" style="animation-delay:5.5s">…so you rewrite it by hand, every day.</div>
+    <div class="caption in" style="animation-delay:9.5s">…so you rewrite it by hand, every day.</div>
   </div>`;
+} else if (card === "uses") {
+  const uses = [
+    ["Founder", "Announces a launch on every network in a minute.", "X · LinkedIn · Threads", 0.6],
+    ["Small business", "Shares today's offer on every channel.", "Instagram · Facebook · Google", 4.0],
+    ["Creator", "Promotes a new video without rewriting it five times.", "YouTube · X · Instagram", 7.4],
+  ];
+  c.innerHTML = `<div>
+    <h1 class="in" style="font-size:58px;margin-bottom:46px">What you can do with <span class="grad">Cascade</span></h1>
+    <div style="display:grid;grid-template-columns:repeat(3,400px);gap:26px;justify-content:center">
+    ${uses.map(([who, what, nets, d]) => `<div class="tile in" style="height:auto;padding:28px;animation-delay:${d}s">
+      <b style="font-family:'Bricolage Grotesque';font-size:30px">${who}</b>
+      <div style="font-size:23px;line-height:1.4;color:#12132a;margin:6px 0 16px">${what}</div>
+      <div style="font-size:16px;font-weight:600;color:#5847f0">${nets}</div></div>`).join("")}
+    </div></div>`;
 } else if (card === "answer" || card === "outro") {
   c.innerHTML = `<div>${LOGO(140)}<div class="word in" style="animation-delay:.5s;margin-top:14px">cascade</div>
     <h1 class="in" style="font-size:72px;margin-top:22px;animation-delay:1s">One idea. <span class="grad">Every channel.</span></h1>
-    <div class="sub in" style="animation-delay:1.5s">${card === "outro" ? "oncascade.vercel.app" : "For people who post daily across networks with Buffer."}</div>
+    <div class="sub in" style="animation-delay:1.5s">${card === "outro" ? "oncascade.vercel.app" : "Built on the Buffer API"}</div>
     ${card === "outro" ? '<div class="in" style="animation-delay:2s;margin-top:34px;color:#5e6280;font-size:20px">Built on the Buffer API for Buffer Commit 2026 · Not affiliated with Buffer</div>' : ""}</div>`;
 }
 </script></body></html>

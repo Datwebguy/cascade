@@ -3,99 +3,69 @@
  "segments": [
   {
    "id": "s01",
-   "scene": "hook",
+   "scene": "answer",
    "chip": "",
-   "text": "If you post on more than one network, you know the problem. X wants it short. LinkedIn wants the story. Instagram wants a caption."
+   "text": "This is Cascade, built on the Buffer API."
   },
   {
    "id": "s02",
    "scene": "hook",
    "chip": "",
-   "text": "So most people either paste the same text everywhere, or rewrite it by hand, every single day."
+   "text": "If you post on X, LinkedIn and Instagram, you know each one wants the same idea told differently. Short on X, the full story on LinkedIn, a caption on Instagram."
   },
   {
    "id": "s03",
-   "scene": "answer",
+   "scene": "hook",
    "chip": "",
-   "text": "Cascade is for people who post daily across several networks with Buffer. You write an idea once, Cascade turns it into a post made for each network, and puts them all in Buffer."
-  },
-  {
-   "id": "s03b",
-   "scene": "answer",
-   "chip": "",
-   "text": "We built it because Buffer already solved the posting. The rewriting was still on you."
+   "text": "So you either paste the same text everywhere, or rewrite it by hand every day. That's the part Cascade does for you."
   },
   {
    "id": "s04",
-   "scene": "app",
-   "chip": "Sign in with Buffer",
-   "text": "Here's my day. I post on X and LinkedIn through Buffer. I sign in with Buffer, and my channels are already there."
+   "scene": "uses",
+   "chip": "",
+   "text": "With Cascade, a founder can announce a launch everywhere in a minute. A small business can share today's offer on every channel. A creator can promote a new video without rewriting it five times."
   },
   {
    "id": "s05",
    "scene": "app",
-   "chip": "Write it once",
-   "text": "We just shipped something, so I write it once, in my own words."
+   "chip": "Sign in with Buffer",
+   "text": "Here's how it works. I sign in with Buffer, and my channels load right away."
   },
   {
    "id": "s06",
    "scene": "app",
-   "chip": "Add an image",
-   "text": "I add a screenshot. I can upload it, or paste a link."
+   "chip": "Write it once",
+   "text": "I write my idea once, in my own words, and add an image."
   },
   {
    "id": "s07",
    "scene": "app",
-   "chip": "My Buffer channels",
-   "text": "I pick X and LinkedIn."
+   "chip": "A post for each network",
+   "text": "I pick my channels, and Cascade writes a version for each one."
   },
   {
    "id": "s08",
    "scene": "app",
-   "chip": "A post for each network",
-   "text": "Cascade writes a version for each."
+   "chip": "Fits each network",
+   "text": "X gets a short post. LinkedIn gets the full story. Both stay within Buffer's limits, and nothing is added that I didn't write."
   },
   {
    "id": "s09",
    "scene": "app",
-   "chip": "Made for each network",
-   "text": "X gets a short, punchy post. LinkedIn gets the story behind it. Both fit Buffer's limits."
+   "chip": "Queue \u00b7 schedule \u00b7 draft",
+   "text": "I can edit any post, then choose to queue it, schedule it, or save it as a draft."
   },
   {
    "id": "s10",
    "scene": "app",
-   "chip": "My words only",
-   "text": "My words only. No hashtags or emojis I didn't write."
+   "chip": "Sent to Buffer",
+   "text": "One tap sends everything to Buffer, and saves my original idea in Buffer Ideas."
   },
   {
    "id": "s11",
-   "scene": "app",
-   "chip": "Edit or rewrite",
-   "text": "I can tweak anything, or get a fresh version."
-  },
-  {
-   "id": "s12",
-   "scene": "app",
-   "chip": "Queue \u00b7 set time \u00b7 draft",
-   "text": "For each network I choose: my Buffer queue, a set time, or a draft. For this demo, both go in as drafts."
-  },
-  {
-   "id": "s13",
-   "scene": "app",
-   "chip": "Sent to Buffer",
-   "text": "One tap, and it's all in Buffer. My idea is saved in Buffer Ideas, and each network gets its own post."
-  },
-  {
-   "id": "s14",
-   "scene": "app",
-   "chip": "Ready in Buffer",
-   "text": "Two networks, two audiences, about a minute of work."
-  },
-  {
-   "id": "s15",
    "scene": "outro",
    "chip": "",
-   "text": "Cascade. Write once, fit every network, ready in Buffer."
+   "text": "That's Cascade. Write once, and every network gets a post that fits. Try it at oncascade dot vercel dot app."
   }
  ]
 }
