@@ -174,7 +174,7 @@ Done and verified against a local Buffer mock, real OpenAI, and a real media URL
 - All "Wrong" items in section 4 (HTTPS redirect URIs, official limits and counting, `Retry-After` handling, cached channels, HTTPS-only media, YouTube `<`/`>`, friendly errors, scopes).
 - All "Hard-coded" items in section 4 that can be derived from Buffer (limits, Mastodon `maxCharacters`, X subscription, Pinterest boards, channel timezone, Ideas pagination, media type from Content-Type). Stock phrases removed; forced YouTube/Instagram settings removed.
 - AI adaptation (OpenAI), Redis token store with refresh lock, safe retry after timeouts, privacy page.
-- Deployed to Vercel with Redis connected: https://cascade-three-brown.vercel.app. Buffer's login page accepts the app's authorization request.
+- Deployed to Vercel with Redis connected: https://oncascade.vercel.app. Buffer's login page accepts the app's authorization request.
 
 Not yet verified:
 

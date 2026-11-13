@@ -17,6 +17,7 @@ export const cacheKey = (sid: string, name: string) => `cascade:cache:${sid}:${n
 export interface PkceState {
   verifier: string;
   state: string;
+  redirectUri: string;
 }
 
 // ---- PKCE (short-lived, encrypted cookie: survives serverless instance changes) ----

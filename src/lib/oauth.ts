@@ -36,16 +36,21 @@ export interface TokenSet {
 
 export function oauthConfig() {
   const clientId = process.env.BUFFER_CLIENT_ID?.trim();
-  // Buffer compares the redirect URI character for character; trim stray whitespace/newlines.
-  const redirectUri = process.env.BUFFER_REDIRECT_URI?.trim();
-  if (!clientId || !redirectUri) {
-    throw new Error("BUFFER_CLIENT_ID and BUFFER_REDIRECT_URI must be set.");
-  }
-  return {
-    clientId,
-    redirectUri,
-    clientSecret: process.env.BUFFER_CLIENT_SECRET?.trim() || undefined,
-  };
+  if (!clientId) throw new Error("BUFFER_CLIENT_ID must be set.");
+  return { clientId, clientSecret: process.env.BUFFER_CLIENT_SECRET?.trim() || undefined };
+}
+
+/**
+ * The redirect URI for the domain the user is on, so the callback lands on the same host that
+ * holds the PKCE cookie. Every domain used must be registered on the Buffer App Client
+ * (Buffer compares character for character). BUFFER_REDIRECT_URI is the fallback when the
+ * request origin isn't known.
+ */
+export function redirectUriFor(origin: string | null): string {
+  if (origin && /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(origin)) return `${origin}/api/auth/callback`;
+  const fallback = process.env.BUFFER_REDIRECT_URI?.trim();
+  if (!fallback) throw new Error("Couldn't determine the redirect URI. Set BUFFER_REDIRECT_URI.");
+  return fallback;
 }
 
 export function createPkce() {
@@ -53,8 +58,8 @@ export function createPkce() {
   return { verifier, challenge: sha256base64url(verifier), state: randomToken(16) };
 }
 
-export function authorizeUrl(challenge: string, state: string): string {
-  const { clientId, redirectUri } = oauthConfig();
+export function authorizeUrl(challenge: string, state: string, redirectUri: string): string {
+  const { clientId } = oauthConfig();
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -94,8 +99,7 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenSet> {
   };
 }
 
-export function exchangeCode(code: string, verifier: string): Promise<TokenSet> {
-  const { redirectUri } = oauthConfig();
+export function exchangeCode(code: string, verifier: string, redirectUri: string): Promise<TokenSet> {
   return tokenRequest({
     grant_type: "authorization_code",
     code,

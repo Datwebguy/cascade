@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
   if (!code) return fail("missing_code");
 
   try {
-    await startSession(await exchangeCode(code, pkce.verifier));
+    // The token exchange must send the exact redirect URI used in the authorize request.
+    await startSession(await exchangeCode(code, pkce.verifier, pkce.redirectUri));
   } catch (e) {
     console.error("OAuth callback failed", e);
     return fail("token_exchange_failed");
