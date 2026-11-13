@@ -54,9 +54,9 @@ test("missing API key is a clear error", async () => {
 import { keepAuthorsTagsAndEmoji } from "./ai";
 
 test("hashtags and emoji the author didn't write are removed", () => {
-  const idea = "Over 900 submissions for the @NEARProtocol hackathon #buildinpublic 🚀";
-  const draft = "Over 900 submissions! 🔥🔥 #NEAR #Web3 #BuildInPublic 🚀\n\n#hackathon #crypto";
-  assert.equal(keepAuthorsTagsAndEmoji(draft, idea), "Over 900 submissions! #BuildInPublic 🚀");
+  const idea = "Over 900 people joined our launch with @Acme #buildinpublic 🚀";
+  const draft = "Over 900 people joined! 🔥🔥 #Launch #Startup #BuildInPublic 🚀\n\n#growth #saas";
+  assert.equal(keepAuthorsTagsAndEmoji(draft, idea), "Over 900 people joined! #BuildInPublic 🚀");
 });
 
 test("keeps mentions, links with #fragments, and the author's own tags", () => {

@@ -2,7 +2,7 @@
 
 **Write one idea. Get a post made for every network. Ready in Buffer.**
 
-Live: **https://oncascade.vercel.app** · ▶ **[Watch the demo (1:19)](https://youtu.be/8lEK_hZaYQM)** · Built on the Buffer API for Buffer Commit 2026
+Live: **https://oncascade.vercel.app** · ▶ **[Watch the demo (1:19)](https://youtu.be/8lEK_hZaYQM)** · Built on the Buffer API
 
 ![Cascade turns one idea into a LinkedIn post and an X post, side by side](docs/screenshots/review.webp)
 
@@ -82,10 +82,6 @@ npm run dev                  # https://localhost:3000 (Buffer requires HTTPS red
 Register `https://localhost:3000/api/auth/callback` (and your production URL) on the App Client. Production also needs a Redis store and a Blob store; both are one click in Vercel Storage.
 
 Checks: `npm run typecheck` and `npm test`.
-
-## Built during Buffer Commit
-
-Everything here was built between October 28 and November 13, 2026.
 
 ## Next
 
